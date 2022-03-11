@@ -1,0 +1,1 @@
+Application-Aware Network Slice Manager developed for 5G-Int5Gent EU Project.
