@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(
-    name='app_aware_nsm',
-    packages=['app_aware_nsm'],
+    name='apis',
+    packages=['apis'],
     include_package_data=True,
-    install_requires=['flask'])
+    install_requires=['flask', 'flask-restx'])
