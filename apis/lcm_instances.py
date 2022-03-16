@@ -3,6 +3,55 @@ import uuid
 
 api = Namespace('lcm/instances', description='Application-Aware NSM LCM APIs')
 
+# Intent Model Specification
+
+location_constraint = api.model('Location Constraint', {'geographicalAreaId': fields.String(required=True)})
+
+computing_constraint = api.model('Computing Constraint', {
+    'applicationComponentId': fields.String(required=True),
+    'ram': fields.Float(required=True),
+    'cpu': fields.Integer(required=True),
+    'storage': fields.Integer(required=True)
+})
+
+profile_params = api.model('Profile Params', {
+    'availability': fields.Float(required=True),
+    'errorRate': fields.Float(required=True),
+    'isolationLevel': fields.String(enum=['NO_ISOLATION', 'LOGICAL'], required=True),
+    'maximumNumberUE': fields.Integer(required=True),
+    'uESpeed': fields.Float(required=True),
+    'uEDensity': fields.Float(required=True),
+    'ulThroughput': fields.Float(required=True),
+    'dlThroughput': fields.Float(required=True),
+    'ulThroughputUE': fields.Float(required=True),
+    'dlThroughputUE': fields.Float(required=True)
+})
+slice_profile = api.model('Slice Profile', {
+    'sliceType': fields.String(enum=['EMBB', 'URLLC', 'MMTC'], required=True),
+    'profileParams': fields.Nested(profile_params, required=True, description='Slice Profile Parameters')
+})
+networking_constraint = api.model('Networking Constraint', {
+    'applicationComponentId': fields.String(required=True),
+    'applicationComponentEndpointId': fields.String(required=True),
+    'sliceProfiles': fields.Nested(slice_profile, required=True, as_list=True, description='List of Slice Profiles')
+})
+
+intent = api.model('Intent', {
+    'locationConstraints': fields.Nested(location_constraint, required=True, as_list=True,
+                                         description='List of Geographical Area Identifiers'),
+    'computingConstraints': fields.Nested(computing_constraint, required=True, as_list=True,
+                                          description='List of Computing Constraints'),
+    'networkingConstraints': fields.Nested(networking_constraint, required=True, as_list=True,
+                                           description='List of Networking Constraints')
+})
+
+scale_intent = api.model('Scale Intent', {
+    'locationConstraints': fields.Nested(location_constraint, required=True, as_list=True,
+                                         description='List of Geographical Area Identifiers'),
+    'computingConstraints': fields.Nested(computing_constraint, required=True, as_list=True,
+                                          description='List of Computing Constraints')
+})
+
 # Vertical Application Slice Status Model Specification
 
 vas_status = api.model('Vertical Application Slice Status', {
@@ -56,56 +105,8 @@ kubeconfig = api.model('K8s Config', {
 vas_info = api.model('Vertical Application Slice Status Information', {
     'vasStatus': fields.Nested(vas_status, required=True, description='Vertical Application Slice Status'),
     'vaQuotaInfo': fields.Nested(kubeconfig, required=True, description='Vertical Application Quota Information'),
-    'networkSliceStatus': fields.Nested(network_slice_status, required=True, description='5G Network Slice Status')
-})
-
-# Intent Model Specification
-
-location_constraint = api.model('Location Constraint', {'geographicalAreaId': fields.String(required=True)})
-
-computing_constraint = api.model('Computing Constraint', {
-    'applicationComponentId': fields.String(required=True),
-    'ram': fields.Float(required=True),
-    'cpu': fields.Integer(required=True),
-    'storage': fields.Integer(required=True)
-})
-
-profile_params = api.model('Profile Params', {
-    'availability': fields.Float(required=True),
-    'errorRate': fields.Float(required=True),
-    'isolationLevel': fields.String(enum=['NO_ISOLATION', 'LOGICAL'], required=True),
-    'maximumNumberUE': fields.Integer(required=True),
-    'uESpeed': fields.Float(required=True),
-    'uEDensity': fields.Float(required=True),
-    'ulThroughput': fields.Float(required=True),
-    'dlThroughput': fields.Float(required=True),
-    'ulThroughputUE': fields.Float(required=True),
-    'dlThroughputUE': fields.Float(required=True)
-})
-slice_profile = api.model('Slice Profile', {
-    'sliceType': fields.String(enum=['EMBB', 'URLLC', 'MMTC'], required=True),
-    'profileParams': fields.Nested(profile_params, required=True, description='Slice Profile Parameters')
-})
-networking_constraint = api.model('Networking Constraint', {
-    'applicationComponentId': fields.String(required=True),
-    'applicationComponentEndpointId': fields.String(required=True),
-    'sliceProfiles': fields.Nested(slice_profile, required=True, as_list=True, description='List of Slice Profiles')
-})
-
-intent = api.model('Intent', {
-    'locationConstraints': fields.Nested(location_constraint, required=True, as_list=True,
-                                         description='List of Geographical Area Identifiers'),
-    'computingConstraints': fields.Nested(computing_constraint, required=True, as_list=True,
-                                          description='List of Computing Constraints'),
-    'networkingConstraints': fields.Nested(networking_constraint, required=True, as_list=True,
-                                           description='List of Networking Constraints')
-})
-
-scale_intent = api.model('Scale Intent', {
-    'locationConstraints': fields.Nested(location_constraint, required=True, as_list=True,
-                                         description='List of Geographical Area Identifiers'),
-    'computingConstraints': fields.Nested(computing_constraint, required=True, as_list=True,
-                                          description='List of Computing Constraints')
+    'networkSliceStatus': fields.Nested(network_slice_status, required=True, description='5G Network Slice Status'),
+    'vasConfiguration': fields.Nested(intent, required=True, description='Vertical Application Slice Configuration')
 })
 
 # Error Message Model Specification
