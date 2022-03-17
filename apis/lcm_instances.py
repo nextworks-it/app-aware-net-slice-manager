@@ -106,7 +106,8 @@ vas_info = api.model('Vertical Application Slice Status Information', {
     'vasStatus': fields.Nested(vas_status, required=True, description='Vertical Application Slice Status'),
     'vaQuotaInfo': fields.Nested(kubeconfig, required=True, description='Vertical Application Quota Information'),
     'networkSliceStatus': fields.Nested(network_slice_status, required=True, description='5G Network Slice Status'),
-    'vasConfiguration': fields.Nested(intent, required=True, description='Vertical Application Slice Configuration')
+    'vasConfiguration': fields.Nested(intent, required=True, description='Vertical Application Slice Configuration'),
+    'nestId': fields.String(required=True)
 })
 
 # Error Message Model Specification
