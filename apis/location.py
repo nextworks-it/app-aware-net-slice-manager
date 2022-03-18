@@ -2,9 +2,9 @@ from flask_restx import Namespace, Resource, fields
 
 api = Namespace('location', description='Application-Aware NSM Location APIs')
 
-# Geographical Point Model Specification
+# Geographical Area Model Specification
 
-geographical_point = api.model('Geographical Point', {
+geographical_area = api.model('Geographical Area', {
     'geographicalAreaId': fields.String(required=True),
     'latitude': fields.Float(required=True),
     'longitude': fields.Float(required=True),
@@ -20,7 +20,7 @@ error_msg = api.model('Error Message', {'message': fields.String(required=True)}
 class LocationCtrl(Resource):
 
     @api.doc('Get the list of Geographical Locations.')
-    @api.marshal_list_with(geographical_point)
+    @api.marshal_list_with(geographical_area)
     @api.response(200, 'Geographical Locations')
     @api.response(401, 'Unauthorized', model=error_msg)
     @api.response(403, 'Forbidden', model=error_msg)
