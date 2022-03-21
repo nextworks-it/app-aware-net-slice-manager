@@ -5,14 +5,15 @@ api = Namespace('lcm/instances', description='Application-Aware NSM LCM APIs')
 
 # Intent Model Specification
 
-location_constraint = api.model('Location Constraint', {'geographicalAreaId': fields.String(required=True)})
+location_constraint = api.model('Location Constraint', {
+    'geographicalAreaId': fields.String(required=True)}, strict=True)
 
 computing_constraint = api.model('Computing Constraint', {
     'applicationComponentId': fields.String(required=True),
     'ram': fields.Float(required=True),
     'cpu': fields.Integer(required=True),
     'storage': fields.Integer(required=True)
-})
+}, strict=True)
 
 profile_params = api.model('Profile Params', {
     'availability': fields.Float(required=True),
@@ -21,20 +22,24 @@ profile_params = api.model('Profile Params', {
     'maximumNumberUE': fields.Integer(required=True),
     'uESpeed': fields.Float(required=True),
     'uEDensity': fields.Float(required=True),
-    'ulThroughput': fields.Float(required=True),
-    'dlThroughput': fields.Float(required=True),
-    'ulThroughputUE': fields.Float(required=True),
-    'dlThroughputUE': fields.Float(required=True)
-})
+    'ulThroughput': fields.Float,
+    'dlThroughput': fields.Float,
+    'ulThroughputUE': fields.Float,
+    'dlThroughputUE': fields.Float,
+    'dataRate': fields.Float,
+    'delay': fields.Float,
+    'jitter': fields.Float,
+    'priorityLevel': fields.Integer
+}, strict=True)
 slice_profile = api.model('Slice Profile', {
     'sliceType': fields.String(enum=['EMBB', 'URLLC', 'MMTC'], required=True),
     'profileParams': fields.Nested(profile_params, required=True, description='Slice Profile Parameters')
-})
+}, strict=True)
 networking_constraint = api.model('Networking Constraint', {
     'applicationComponentId': fields.String(required=True),
     'applicationComponentEndpointId': fields.String(required=True),
     'sliceProfiles': fields.Nested(slice_profile, required=True, as_list=True, description='List of Slice Profiles')
-})
+}, strict=True)
 
 intent = api.model('Intent', {
     'locationConstraints': fields.Nested(location_constraint, required=True, as_list=True,
@@ -43,14 +48,14 @@ intent = api.model('Intent', {
                                           description='List of Computing Constraints'),
     'networkingConstraints': fields.Nested(networking_constraint, required=True, as_list=True,
                                            description='List of Networking Constraints')
-})
+}, strict=True)
 
 scale_intent = api.model('Scale Intent', {
     'locationConstraints': fields.Nested(location_constraint, required=True, as_list=True,
                                          description='List of Geographical Area Identifiers'),
     'computingConstraints': fields.Nested(computing_constraint, required=True, as_list=True,
                                           description='List of Computing Constraints')
-})
+}, strict=True)
 
 # Vertical Application Slice Status Model Specification
 
@@ -58,40 +63,40 @@ vas_status = api.model('Vertical Application Slice Status', {
     'vasi': fields.String(required=True),
     'status': fields.String(enum=['INSTANTIATING', 'INSTANTIATED',
                                   'FAILED', 'TERMINATING', 'TERMINATED'], required=True)
-})
+}, strict=True)
 
 network_slice_status = api.model('5G Network Slice Status', {
     'networkSliceId': fields.String(required=True),
     'status': fields.String(enum=['INSTANTIATING', 'INSTANTIATED',
                                   'FAILED', 'TERMINATING', 'TERMINATED'], required=True)
-})
+}, strict=True)
 
 cluster_info = api.model('K8s Cluster Info', {
     'certificate-authority-data': fields.String(required=True),
     'server': fields.String(required=True)
-})
+}, strict=True)
 cluster = api.model('K8s Cluster', {
     'cluster': fields.Nested(cluster_info, required=True, description='K8s Cluster'),
     'name': fields.String(required=True)
-})
+}, strict=True)
 context_info = api.model('K8s Context Info', {
     'cluster': fields.String(required=True),
     'user': fields.String(required=True),
     'namespace': fields.String(required=True)
-})
+}, strict=True)
 context = api.model('K8s Context', {
     'context': fields.Nested(context_info, required=True, description='K8s Context'),
     'name': fields.String(required=True)
-})
-preferences = api.model('K8s Preferences', {})
+}, strict=True)
+preferences = api.model('K8s Preferences', {}, strict=True)
 user_info = api.model('K8s User Info', {
     'token': fields.String(required=True),
     'client-key-data': fields.String(required=True)
-})
+}, strict=True)
 user = api.model('K8s User', {
     'user': fields.Nested(user_info, required=True, description='K8s User'),
     'name': fields.String(required=True)
-})
+}, strict=True)
 kubeconfig = api.model('K8s Config', {
     'apiVersion': fields.String(required=True),
     'clusters': fields.Nested(cluster, required=True, as_list=True, description='K8s Clusters'),
@@ -100,7 +105,7 @@ kubeconfig = api.model('K8s Config', {
     'kind': fields.String(enum=['Config'], required=True),
     'preferences': fields.Nested(preferences, required=True, description='K8s Preferences'),
     'users': fields.Nested(user, required=True, as_list=True, description='K8s Users')
-})
+}, strict=True)
 
 vas_info = api.model('Vertical Application Slice Status Information', {
     'vasStatus': fields.Nested(vas_status, required=True, description='Vertical Application Slice Status'),
@@ -108,7 +113,7 @@ vas_info = api.model('Vertical Application Slice Status Information', {
     'networkSliceStatus': fields.Nested(network_slice_status, required=True, description='5G Network Slice Status'),
     'vasConfiguration': fields.Nested(intent, required=True, description='Vertical Application Slice Configuration'),
     'nestId': fields.String(required=True)
-})
+}, strict=True)
 
 # Error Message Model Specification
 
