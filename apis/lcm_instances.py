@@ -33,28 +33,30 @@ profile_params = api.model('Profile Params', {
 }, strict=True)
 slice_profile = api.model('Slice Profile', {
     'sliceType': fields.String(enum=['EMBB', 'URLLC', 'MMTC'], required=True),
-    'profileParams': fields.Nested(profile_params, required=True, description='Slice Profile Parameters')
+    'profileParams': fields.Nested(profile_params, required=True,
+                                   description='Slice Profile Parameters', skip_none=True)
 }, strict=True)
 networking_constraint = api.model('Networking Constraint', {
     'applicationComponentId': fields.String(required=True),
     'applicationComponentEndpointId': fields.String(required=True),
-    'sliceProfiles': fields.Nested(slice_profile, required=True, as_list=True, description='List of Slice Profiles')
+    'sliceProfiles': fields.Nested(slice_profile, required=True, as_list=True,
+                                   description='List of Slice Profiles', skip_none=True)
 }, strict=True)
 
 intent = api.model('Intent', {
     'locationConstraints': fields.Nested(location_constraint, required=True, as_list=True,
-                                         description='List of Geographical Area Identifiers'),
+                                         description='List of Geographical Area Identifiers', skip_none=True),
     'computingConstraints': fields.Nested(computing_constraint, required=True, as_list=True,
-                                          description='List of Computing Constraints'),
+                                          description='List of Computing Constraints', skip_none=True),
     'networkingConstraints': fields.Nested(networking_constraint, required=True, as_list=True,
-                                           description='List of Networking Constraints')
+                                           description='List of Networking Constraints', skip_none=True)
 }, strict=True)
 
 scale_intent = api.model('Scale Intent', {
     'locationConstraints': fields.Nested(location_constraint, required=True, as_list=True,
-                                         description='List of Geographical Area Identifiers'),
+                                         description='List of Geographical Area Identifiers', skip_none=True),
     'computingConstraints': fields.Nested(computing_constraint, required=True, as_list=True,
-                                          description='List of Computing Constraints')
+                                          description='List of Computing Constraints', skip_none=True)
 }, strict=True)
 
 # Vertical Application Slice Status Model Specification
@@ -76,7 +78,7 @@ cluster_info = api.model('K8s Cluster Info', {
     'server': fields.String(required=True)
 }, strict=True)
 cluster = api.model('K8s Cluster', {
-    'cluster': fields.Nested(cluster_info, required=True, description='K8s Cluster'),
+    'cluster': fields.Nested(cluster_info, required=True, description='K8s Cluster', skip_none=True),
     'name': fields.String(required=True)
 }, strict=True)
 context_info = api.model('K8s Context Info', {
@@ -85,7 +87,7 @@ context_info = api.model('K8s Context Info', {
     'namespace': fields.String(required=True)
 }, strict=True)
 context = api.model('K8s Context', {
-    'context': fields.Nested(context_info, required=True, description='K8s Context'),
+    'context': fields.Nested(context_info, required=True, description='K8s Context', skip_none=True),
     'name': fields.String(required=True)
 }, strict=True)
 preferences = api.model('K8s Preferences', {}, strict=True)
@@ -94,24 +96,28 @@ user_info = api.model('K8s User Info', {
     'client-key-data': fields.String(required=True)
 }, strict=True)
 user = api.model('K8s User', {
-    'user': fields.Nested(user_info, required=True, description='K8s User'),
+    'user': fields.Nested(user_info, required=True, description='K8s User', skip_none=True),
     'name': fields.String(required=True)
 }, strict=True)
 kubeconfig = api.model('K8s Config', {
     'apiVersion': fields.String(required=True),
-    'clusters': fields.Nested(cluster, required=True, as_list=True, description='K8s Clusters'),
-    'contexts': fields.Nested(context, required=True, as_list=True, description='K8s Contexts'),
+    'clusters': fields.Nested(cluster, required=True, as_list=True, description='K8s Clusters', skip_none=True),
+    'contexts': fields.Nested(context, required=True, as_list=True, description='K8s Contexts', skip_none=True),
     'current-context': fields.String(required=True),
     'kind': fields.String(enum=['Config'], required=True),
-    'preferences': fields.Nested(preferences, required=True, description='K8s Preferences'),
-    'users': fields.Nested(user, required=True, as_list=True, description='K8s Users')
+    'preferences': fields.Nested(preferences, required=True, description='K8s Preferences', skip_none=True),
+    'users': fields.Nested(user, required=True, as_list=True, description='K8s Users', skip_none=True)
 }, strict=True)
 
 vas_info = api.model('Vertical Application Slice Status Information', {
-    'vasStatus': fields.Nested(vas_status, required=True, description='Vertical Application Slice Status'),
-    'vaQuotaInfo': fields.Nested(kubeconfig, required=True, description='Vertical Application Quota Information'),
-    'networkSliceStatus': fields.Nested(network_slice_status, required=True, description='5G Network Slice Status'),
-    'vasConfiguration': fields.Nested(intent, required=True, description='Vertical Application Slice Configuration'),
+    'vasStatus': fields.Nested(vas_status, required=True,
+                               description='Vertical Application Slice Status', skip_none=True),
+    'vaQuotaInfo': fields.Nested(kubeconfig, required=True,
+                                 description='Vertical Application Quota Information', skip_none=True),
+    'networkSliceStatus': fields.Nested(network_slice_status, required=True,
+                                        description='5G Network Slice Status', skip_none=True),
+    'vasConfiguration': fields.Nested(intent, required=True,
+                                      description='Vertical Application Slice Configuration', skip_none=True),
     'nestId': fields.String(required=True)
 }, strict=True)
 
@@ -124,7 +130,7 @@ error_msg = api.model('Error Message', {'message': fields.String(required=True)}
 class VASCtrl(Resource):
 
     @api.doc('Get the list of Vertical Application Slice Instances.')
-    @api.marshal_list_with(vas_info)
+    @api.marshal_list_with(vas_info, skip_none=True)
     @api.response(200, 'Vertical Application Slice Instances')
     @api.response(401, 'Unauthorized', model=error_msg)
     @api.response(403, 'Forbidden', model=error_msg)
@@ -148,7 +154,7 @@ class VASCtrl(Resource):
 class VASCtrlByID(Resource):
 
     @api.doc('Get a Vertical Application Slice by ID.')
-    @api.marshal_with(vas_info)
+    @api.marshal_with(vas_info, skip_none=True)
     @api.response(200, 'Vertical Application Slice Instance')
     @api.response(401, 'Unauthorized', model=error_msg)
     @api.response(403, 'Forbidden', model=error_msg)
