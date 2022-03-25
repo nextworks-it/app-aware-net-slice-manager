@@ -1,4 +1,5 @@
 from flask_restx import Namespace, Resource, fields
+from core import app_quota_manager
 import uuid
 
 api = Namespace('lcm/instances', description='Application-Aware NSM LCM APIs')
@@ -146,6 +147,9 @@ class VASCtrl(Resource):
     @api.response(403, 'Forbidden', model=error_msg)
     @api.response(500, 'Internal Server Error', model=error_msg)
     def post(self):
+        ns_name = app_quota_manager.create_constrained_ns('1', '512M', '2', '1Gi')
+        sa_name = app_quota_manager.create_constrained_sa(ns_name)
+        api.logger.info('Namespace %s and service account %s created.', ns_name, sa_name)
         return str(uuid.uuid4())
 
 
