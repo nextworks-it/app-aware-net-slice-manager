@@ -18,7 +18,6 @@ except ConfigException:
     # If .kube/config is missing and the app-aware-nsm is running in a pod
     config.load_incluster_config()
 
-
 # Create K8s clients
 with client.ApiClient() as api_client:
     core_api = client.CoreV1Api(api_client)
@@ -44,4 +43,4 @@ try:
     rbac_api.create_cluster_role(c_role)
 except ApiException as e:
     if e.status == 409:
-        log.info("ClusterRole already exists.")
+        log.info('ClusterRole already exists.')
