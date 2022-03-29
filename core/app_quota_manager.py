@@ -104,7 +104,7 @@ def allocate_quota(context: str, requests_cpu: str, requests_memory: str, limits
     except ConfigException:
         # If .kube/config context is missing
         log.error('Missing kubeconfig at .kube/config, abort.')
-        raise exceptions.MissingContextException('Missing context %s.', context)
+        raise exceptions.MissingContextException('Missing context ' + context)
 
     # Get host of K8s cluster
     host = client.Configuration.get_default_copy().host
@@ -129,9 +129,9 @@ def allocate_quota(context: str, requests_cpu: str, requests_memory: str, limits
 
     secrets_len = len(secrets)
     if secrets_len == 0:
-        raise exceptions.ServiceAccountSecretException('Missing ServiceAccount Secret for ServiceAccount %s.', sa_name)
+        raise exceptions.ServiceAccountSecretException('Missing ServiceAccount Secret for ServiceAccount ' + sa_name)
     elif secrets_len > 1:
-        raise exceptions.ServiceAccountSecretException('Too Many ServiceAccount Secret for ServiceAccount %s.', sa_name)
+        raise exceptions.ServiceAccountSecretException('Too Many ServiceAccount Secret for ServiceAccount ' + sa_name)
 
     # Get the ca.crt and token of the ServiceAccount created
     sa_secret_data = secrets[0].data
