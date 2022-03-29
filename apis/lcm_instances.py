@@ -1,6 +1,9 @@
 from flask_restx import Namespace, Resource, fields
+from flask import request, abort
 from core import app_quota_manager
 from core import exceptions
+from marshmallow import Schema
+import marshmallow.fields
 
 api = Namespace('lcm/instances', description='Application-Aware NSM LCM APIs')
 
@@ -127,6 +130,13 @@ vas_info = api.model('Vertical Application Slice Status Information', {
 error_msg = api.model('Error Message', {'message': fields.String(required=True)})
 
 
+class VASPostSchema(Schema):
+    context = marshmallow.fields.Str(required=True)
+
+
+vas_post_schema = VASPostSchema()
+
+
 @api.route('/')
 class VASCtrl(Resource):
 
@@ -140,6 +150,7 @@ class VASCtrl(Resource):
         return []
 
     @api.doc('Request Vertical Application Slice Instantiation.')
+    @api.param('context', 'Context of K8s cluster', required=True)
     @api.expect(intent, validate=True)
     @api.response(200, 'Vertical Application Slice Identifier', model=fields.String)
     @api.response(400, 'Bad Request', model=error_msg)
@@ -147,10 +158,15 @@ class VASCtrl(Resource):
     @api.response(403, 'Forbidden', model=error_msg)
     @api.response(500, 'Internal Server Error', model=error_msg)
     def post(self):
+        errors = vas_post_schema.validate(request.args)
+        if errors:
+            abort(400, str(errors))
+
+        k8s_config = None
         try:
-            k8s_config = app_quota_manager.allocate_quota('kubernetes-admin@kubernetes', '1', '512M', '2', '1Gi')
+            k8s_config = app_quota_manager.allocate_quota(request.args.get('context'), '1', '512M', '2', '1Gi')
         except exceptions.MissingContextException as e:
-            return str(e), 404
+            abort(400, str(e))
 
         return k8s_config
 
