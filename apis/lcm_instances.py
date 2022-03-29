@@ -164,7 +164,7 @@ class VASCtrl(Resource):
 
         k8s_config = None
         try:
-            k8s_config = app_quota_manager.allocate_quota(request.args.get('context'), '1', '512M', '2', '1Gi')
+            k8s_config = app_quota_manager.allocate_quota(request.args.get('context'), '1', '512M', '2', '1Gi', '5Gi')
         except exceptions.MissingContextException as e:
             abort(400, str(e))
 

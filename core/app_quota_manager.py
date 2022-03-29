@@ -7,12 +7,12 @@ from base64 import b64decode
 import uuid
 
 
-def get_computing_constraints():
+def get_computing_constraints(computing_constraints):
     return None
 
 
 def create_constrained_ns(core_api: client.CoreV1Api, host: str, requests_cpu: str, requests_memory: str,
-                          limits_cpu: str, limits_memory: str) -> str:
+                          limits_cpu: str, limits_memory: str, requests_storage: str) -> str:
     # Create a namespace with random uuid as name
     ns_name = str(uuid.uuid4())
     ns = client.V1Namespace(metadata=client.V1ObjectMeta(name=ns_name))
@@ -27,7 +27,8 @@ def create_constrained_ns(core_api: client.CoreV1Api, host: str, requests_cpu: s
             'requests.cpu': requests_cpu,
             'requests.memory': requests_memory,
             'limits.cpu': limits_cpu,
-            'limits.memory': limits_memory
+            'limits.memory': limits_memory,
+            'requests.storage': requests_storage
         })
     )
     core_api.create_namespaced_resource_quota(ns_name, rq)
@@ -94,8 +95,9 @@ def create_constrained_sa(core_api: client.CoreV1Api, host: str,
     return sa_name
 
 
-def allocate_quota(context: str, requests_cpu: str, requests_memory: str, limits_cpu: str, limits_memory: str):
-    get_computing_constraints()
+def allocate_quota(context: str, requests_cpu: str, requests_memory: str,
+                   limits_cpu: str, limits_memory: str, requests_storage: str):
+    get_computing_constraints(None)
 
     try:
         # Load the kubeconfig at .kube/config and change context to create
@@ -115,7 +117,8 @@ def allocate_quota(context: str, requests_cpu: str, requests_memory: str, limits
         rbac_api = client.RbacAuthorizationV1Api(api_client)
 
     # Create the resources for the quota
-    ns_name = create_constrained_ns(core_api, host, requests_cpu, requests_memory, limits_cpu, limits_memory)
+    ns_name = create_constrained_ns(core_api, host, requests_cpu, requests_memory,
+                                    limits_cpu, limits_memory, requests_storage)
     sa_name = create_constrained_sa(core_api, host, rbac_api, ns_name)
 
     # Retrieve the secrets created in the namespace
