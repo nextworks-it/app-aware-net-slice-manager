@@ -131,7 +131,7 @@ error_msg = api.model('Error Message', {'message': fields.String(required=True)}
 
 
 class VASPostSchema(Schema):
-    context = marshmallow.fields.Str(required=True)
+    context = marshmallow.fields.Str()
 
 
 vas_post_schema = VASPostSchema()
@@ -150,7 +150,7 @@ class VASCtrl(Resource):
         return []
 
     @api.doc('Request Vertical Application Slice Instantiation.')
-    @api.param('context', 'Context of K8s cluster', required=True)
+    @api.param('context', 'Context of K8s cluster')
     @api.expect(intent, validate=True)
     @api.response(200, 'Vertical Application Slice Identifier', model=fields.String)
     @api.response(400, 'Bad Request', model=error_msg)

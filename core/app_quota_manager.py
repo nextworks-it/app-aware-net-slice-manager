@@ -100,12 +100,17 @@ def allocate_quota(context: str, requests_cpu: str, requests_memory: str,
     get_computing_constraints(None)
 
     try:
-        # Load the kubeconfig at .kube/config and change context to create
-        # the resources for the quota in the specified K8s cluster
-        config.load_kube_config(context=context)
+        contexts, _ = config.list_kube_config_contexts()
+        if len(contexts) == 1:
+            # Load the kubeconfig at .kube/config
+            config.load_kube_config()
+        else:
+            # Load the kubeconfig at .kube/config and change context to create
+            # the resources for the quota in the specified K8s cluster
+            config.load_kube_config(context=context)
     except ConfigException:
         # If .kube/config context is missing
-        log.error('Missing kubeconfig at .kube/config, abort.')
+        log.error('Missing context ' + context + ' in .kube/config, abort.')
         raise exceptions.MissingContextException('Missing context ' + context)
 
     # Get host of K8s cluster
