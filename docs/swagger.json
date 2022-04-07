@@ -3,6 +3,50 @@
   "basePath": "/",
   "paths": {
     "/lcm/instances/": {
+      "get": {
+        "responses": {
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "$ref": "#/definitions/Error%20Message"
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "schema": {
+              "$ref": "#/definitions/Error%20Message"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error%20Message"
+            }
+          },
+          "200": {
+            "description": "Success",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Vertical%20Application%20Slice%20Status%20Information"
+              }
+            }
+          }
+        },
+        "operationId": "Get the list of Vertical Application Slice Instances.",
+        "parameters": [
+          {
+            "name": "X-Fields",
+            "in": "header",
+            "type": "string",
+            "format": "mask",
+            "description": "An optional fields mask"
+          }
+        ],
+        "tags": [
+          "lcm/instances"
+        ]
+      },
       "post": {
         "responses": {
           "500": {
@@ -56,50 +100,6 @@
         "tags": [
           "lcm/instances"
         ]
-      },
-      "get": {
-        "responses": {
-          "500": {
-            "description": "Internal Server Error",
-            "schema": {
-              "$ref": "#/definitions/Error%20Message"
-            }
-          },
-          "403": {
-            "description": "Forbidden",
-            "schema": {
-              "$ref": "#/definitions/Error%20Message"
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "schema": {
-              "$ref": "#/definitions/Error%20Message"
-            }
-          },
-          "200": {
-            "description": "Success",
-            "schema": {
-              "type": "array",
-              "items": {
-                "$ref": "#/definitions/Vertical%20Application%20Slice%20Status%20Information"
-              }
-            }
-          }
-        },
-        "operationId": "Get the list of Vertical Application Slice Instances.",
-        "parameters": [
-          {
-            "name": "X-Fields",
-            "in": "header",
-            "type": "string",
-            "format": "mask",
-            "description": "An optional fields mask"
-          }
-        ],
-        "tags": [
-          "lcm/instances"
-        ]
       }
     },
     "/lcm/instances/{vasi}": {
@@ -112,41 +112,6 @@
           "type": "string"
         }
       ],
-      "delete": {
-        "responses": {
-          "500": {
-            "description": "Internal Server Error",
-            "schema": {
-              "$ref": "#/definitions/Error%20Message"
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "schema": {
-              "$ref": "#/definitions/Error%20Message"
-            }
-          },
-          "403": {
-            "description": "Forbidden",
-            "schema": {
-              "$ref": "#/definitions/Error%20Message"
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "schema": {
-              "$ref": "#/definitions/Error%20Message"
-            }
-          },
-          "204": {
-            "description": "Vertical Application Slice Instance Deleted"
-          }
-        },
-        "operationId": "Delete a Vertical Application Slice by ID.",
-        "tags": [
-          "lcm/instances"
-        ]
-      },
       "get": {
         "responses": {
           "500": {
@@ -190,6 +155,41 @@
             "description": "An optional fields mask"
           }
         ],
+        "tags": [
+          "lcm/instances"
+        ]
+      },
+      "delete": {
+        "responses": {
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "$ref": "#/definitions/Error%20Message"
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "schema": {
+              "$ref": "#/definitions/Error%20Message"
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "schema": {
+              "$ref": "#/definitions/Error%20Message"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error%20Message"
+            }
+          },
+          "204": {
+            "description": "Vertical Application Slice Instance Deleted"
+          }
+        },
+        "operationId": "Delete a Vertical Application Slice by ID.",
         "tags": [
           "lcm/instances"
         ]
@@ -422,13 +422,13 @@
           "type": "string"
         },
         "ram": {
-          "type": "number"
+          "type": "string"
         },
         "cpu": {
-          "type": "integer"
+          "type": "string"
         },
         "storage": {
-          "type": "integer"
+          "type": "string"
         }
       },
       "type": "object",
