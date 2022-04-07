@@ -1,12 +1,6 @@
 name: Swagger Specification CI
 
-on:
-  push:
-    branches: [ master ]
-  pull_request:
-    branches: [ master ]
-  release:
-    types: [ created ]
+on: [workflow_dispatch]
 
 jobs:
   build:
