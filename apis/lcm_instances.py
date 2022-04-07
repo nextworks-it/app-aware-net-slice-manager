@@ -162,13 +162,16 @@ class VASCtrl(Resource):
         if errors:
             abort(400, str(errors))
 
-        k8s_config = None
+        vas_intent = request.json
+
+        k8s_configs = None
         try:
-            k8s_config = app_quota_manager.allocate_quota(request.args.get('context'), '1', '512M', '2', '1Gi', '5Gi')
-        except exceptions.MissingContextException as e:
+            k8s_configs = app_quota_manager.allocate_quotas(vas_intent['computingConstraints'],
+                                                            request.args.get('context'))
+        except (exceptions.MissingContextException, exceptions.QuantitiesMalformedException) as e:
             abort(400, str(e))
 
-        return k8s_config
+        return k8s_configs
 
 
 @api.route('/<uuid:vasi>')

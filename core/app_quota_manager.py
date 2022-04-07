@@ -5,14 +5,12 @@ from core import log
 from core import exceptions
 from base64 import b64decode
 import uuid
+import re
+
+pattern = re.compile('^([+-]?[0-9.]+)([eEinumkKMGTP]*[-+]?[0-9]*)$')
 
 
-def get_computing_constraints(computing_constraints):
-    return None
-
-
-def create_constrained_ns(core_api: client.CoreV1Api, host: str, requests_cpu: str, requests_memory: str,
-                          limits_cpu: str, limits_memory: str, requests_storage: str) -> str:
+def create_constrained_ns(core_api: client.CoreV1Api, host: str, computing_constraint) -> str:
     # Create a namespace with random uuid as name
     ns_name = str(uuid.uuid4())
     ns = client.V1Namespace(metadata=client.V1ObjectMeta(name=ns_name))
@@ -24,11 +22,11 @@ def create_constrained_ns(core_api: client.CoreV1Api, host: str, requests_cpu: s
     rq = client.V1ResourceQuota(
         metadata=client.V1ObjectMeta(name=ns_name + '-quota'),
         spec=client.V1ResourceQuotaSpec(hard={
-            'requests.cpu': requests_cpu,
-            'requests.memory': requests_memory,
-            'limits.cpu': limits_cpu,
-            'limits.memory': limits_memory,
-            'requests.storage': requests_storage
+            # 'requests.cpu': requests_cpu,
+            # 'requests.memory': requests_memory,
+            'limits.cpu': computing_constraint['cpu'],
+            'limits.memory': computing_constraint['ram'],
+            'requests.storage': computing_constraint['storage']
         })
     )
     core_api.create_namespaced_resource_quota(ns_name, rq)
@@ -95,10 +93,7 @@ def create_constrained_sa(core_api: client.CoreV1Api, host: str,
     return sa_name
 
 
-def allocate_quota(context: str, requests_cpu: str, requests_memory: str,
-                   limits_cpu: str, limits_memory: str, requests_storage: str):
-    get_computing_constraints(None)
-
+def allocate_quota(computing_constraint, context: str):
     try:
         contexts, _ = config.list_kube_config_contexts()
         if len(contexts) == 1:
@@ -122,8 +117,7 @@ def allocate_quota(context: str, requests_cpu: str, requests_memory: str,
         rbac_api = client.RbacAuthorizationV1Api(api_client)
 
     # Create the resources for the quota
-    ns_name = create_constrained_ns(core_api, host, requests_cpu, requests_memory,
-                                    limits_cpu, limits_memory, requests_storage)
+    ns_name = create_constrained_ns(core_api, host, computing_constraint)
     sa_name = create_constrained_sa(core_api, host, rbac_api, ns_name)
 
     # Retrieve the secrets created in the namespace
@@ -177,3 +171,21 @@ def allocate_quota(context: str, requests_cpu: str, requests_memory: str,
             'name': sa_name
         }]
     }
+
+
+def allocate_quotas(computing_constraints, context: str):
+    # Allocate quota for each computing constraint in the request
+    k8s_configs = []
+    for computing_constraint in computing_constraints:
+        try:
+            # Requirements must match the regex e.g. 4Gi
+            if not pattern.match(computing_constraint['cpu']) or \
+                    not pattern.match(computing_constraint['ram'] or
+                                      not pattern.match(computing_constraint['storage'])):
+                raise exceptions.QuantitiesMalformedException('Quantities must match the regular expression '
+                                                              '^([+-]?[0-9.]+)([eEinumkKMGTP]*[-+]?[0-9]*)$')
+            k8s_configs.append(allocate_quota(computing_constraint, context))
+        except exceptions.MissingContextException as e:
+            raise e
+
+    return k8s_configs

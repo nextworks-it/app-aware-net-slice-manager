@@ -4,3 +4,7 @@ class ServiceAccountSecretException(Exception):
 
 class MissingContextException(Exception):
     pass
+
+
+class QuantitiesMalformedException(Exception):
+    pass
