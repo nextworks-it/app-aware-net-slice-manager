@@ -14,9 +14,9 @@ location_constraint = api.model('Location Constraint', {
 
 computing_constraint = api.model('Computing Constraint', {
     'applicationComponentId': fields.String(required=True),
-    'ram': fields.Float(required=True),
-    'cpu': fields.Integer(required=True),
-    'storage': fields.Integer(required=True)
+    'ram': fields.String(required=True),
+    'cpu': fields.String(required=True),
+    'storage': fields.String(required=True)
 }, strict=True)
 
 profile_params = api.model('Profile Params', {
