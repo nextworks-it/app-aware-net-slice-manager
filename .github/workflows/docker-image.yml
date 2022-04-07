@@ -29,4 +29,4 @@ jobs:
           context: .
           file: deployment/Dockerfile
           push: true
-          tags: docker.pkg.github.com/nextworks-it/app-aware-net-slice-manager/app-aware-nsm:latest
+          tags: app-aware-net-slice-manager/app-aware-nsm:latest
