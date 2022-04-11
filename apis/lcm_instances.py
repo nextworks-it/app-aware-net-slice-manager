@@ -20,12 +20,12 @@ computing_constraint = api.model('computing_constraint', {
 }, strict=True)
 
 profile_params = api.model('profile_params', {
-    'availability': fields.Float(required=True),
-    'errorRate': fields.Float(required=True),
-    'isolationLevel': fields.String(enum=['NO_ISOLATION', 'LOGICAL'], required=True),
-    'maximumNumberUE': fields.Integer(required=True),
-    'uESpeed': fields.Float(required=True),
-    'uEDensity': fields.Float(required=True),
+    'availability': fields.Float,
+    'errorRate': fields.Float,
+    'isolationLevel': fields.String(enum=['NO_ISOLATION', 'LOGICAL']),
+    'maximumNumberUE': fields.Integer,
+    'uESpeed': fields.Float,
+    'uEDensity': fields.Float,
     'ulThroughput': fields.Float,
     'dlThroughput': fields.Float,
     'ulThroughputUE': fields.Float,
