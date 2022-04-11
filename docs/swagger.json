@@ -8,19 +8,19 @@
           "500": {
             "description": "Internal Server Error",
             "schema": {
-              "$ref": "#/definitions/Error%20Message"
+              "$ref": "#/definitions/error_msg"
             }
           },
           "403": {
             "description": "Forbidden",
             "schema": {
-              "$ref": "#/definitions/Error%20Message"
+              "$ref": "#/definitions/error_msg"
             }
           },
           "401": {
             "description": "Unauthorized",
             "schema": {
-              "$ref": "#/definitions/Error%20Message"
+              "$ref": "#/definitions/error_msg"
             }
           },
           "200": {
@@ -28,7 +28,7 @@
             "schema": {
               "type": "array",
               "items": {
-                "$ref": "#/definitions/Vertical%20Application%20Slice%20Status%20Information"
+                "$ref": "#/definitions/vas_info"
               }
             }
           }
@@ -52,25 +52,25 @@
           "500": {
             "description": "Internal Server Error",
             "schema": {
-              "$ref": "#/definitions/Error%20Message"
+              "$ref": "#/definitions/error_msg"
             }
           },
           "403": {
             "description": "Forbidden",
             "schema": {
-              "$ref": "#/definitions/Error%20Message"
+              "$ref": "#/definitions/error_msg"
             }
           },
           "401": {
             "description": "Unauthorized",
             "schema": {
-              "$ref": "#/definitions/Error%20Message"
+              "$ref": "#/definitions/error_msg"
             }
           },
           "400": {
             "description": "Bad Request",
             "schema": {
-              "$ref": "#/definitions/Error%20Message"
+              "$ref": "#/definitions/error_msg"
             }
           },
           "200": {
@@ -87,7 +87,7 @@
             "required": true,
             "in": "body",
             "schema": {
-              "$ref": "#/definitions/Intent"
+              "$ref": "#/definitions/intent"
             }
           },
           {
@@ -112,36 +112,71 @@
           "type": "string"
         }
       ],
-      "get": {
+      "delete": {
         "responses": {
           "500": {
             "description": "Internal Server Error",
             "schema": {
-              "$ref": "#/definitions/Error%20Message"
+              "$ref": "#/definitions/error_msg"
             }
           },
           "404": {
             "description": "Not Found",
             "schema": {
-              "$ref": "#/definitions/Error%20Message"
+              "$ref": "#/definitions/error_msg"
             }
           },
           "403": {
             "description": "Forbidden",
             "schema": {
-              "$ref": "#/definitions/Error%20Message"
+              "$ref": "#/definitions/error_msg"
             }
           },
           "401": {
             "description": "Unauthorized",
             "schema": {
-              "$ref": "#/definitions/Error%20Message"
+              "$ref": "#/definitions/error_msg"
+            }
+          },
+          "204": {
+            "description": "Vertical Application Slice Instance Deleted"
+          }
+        },
+        "operationId": "Delete a Vertical Application Slice by ID.",
+        "tags": [
+          "lcm/instances"
+        ]
+      },
+      "get": {
+        "responses": {
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "$ref": "#/definitions/error_msg"
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "schema": {
+              "$ref": "#/definitions/error_msg"
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "schema": {
+              "$ref": "#/definitions/error_msg"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/error_msg"
             }
           },
           "200": {
             "description": "Success",
             "schema": {
-              "$ref": "#/definitions/Vertical%20Application%20Slice%20Status%20Information"
+              "$ref": "#/definitions/vas_info"
             }
           }
         },
@@ -155,41 +190,6 @@
             "description": "An optional fields mask"
           }
         ],
-        "tags": [
-          "lcm/instances"
-        ]
-      },
-      "delete": {
-        "responses": {
-          "500": {
-            "description": "Internal Server Error",
-            "schema": {
-              "$ref": "#/definitions/Error%20Message"
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "schema": {
-              "$ref": "#/definitions/Error%20Message"
-            }
-          },
-          "403": {
-            "description": "Forbidden",
-            "schema": {
-              "$ref": "#/definitions/Error%20Message"
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "schema": {
-              "$ref": "#/definitions/Error%20Message"
-            }
-          },
-          "204": {
-            "description": "Vertical Application Slice Instance Deleted"
-          }
-        },
-        "operationId": "Delete a Vertical Application Slice by ID.",
         "tags": [
           "lcm/instances"
         ]
@@ -210,25 +210,25 @@
           "500": {
             "description": "Internal Server Error",
             "schema": {
-              "$ref": "#/definitions/Error%20Message"
+              "$ref": "#/definitions/error_msg"
             }
           },
           "404": {
             "description": "Not Found",
             "schema": {
-              "$ref": "#/definitions/Error%20Message"
+              "$ref": "#/definitions/error_msg"
             }
           },
           "403": {
             "description": "Forbidden",
             "schema": {
-              "$ref": "#/definitions/Error%20Message"
+              "$ref": "#/definitions/error_msg"
             }
           },
           "401": {
             "description": "Unauthorized",
             "schema": {
-              "$ref": "#/definitions/Error%20Message"
+              "$ref": "#/definitions/error_msg"
             }
           },
           "204": {
@@ -242,7 +242,7 @@
             "required": true,
             "in": "body",
             "schema": {
-              "$ref": "#/definitions/Scale%20Intent"
+              "$ref": "#/definitions/scale_intent"
             }
           }
         ],
@@ -266,25 +266,25 @@
           "500": {
             "description": "Internal Server Error",
             "schema": {
-              "$ref": "#/definitions/Error%20Message"
+              "$ref": "#/definitions/error_msg"
             }
           },
           "404": {
             "description": "Not Found",
             "schema": {
-              "$ref": "#/definitions/Error%20Message"
+              "$ref": "#/definitions/error_msg"
             }
           },
           "403": {
             "description": "Forbidden",
             "schema": {
-              "$ref": "#/definitions/Error%20Message"
+              "$ref": "#/definitions/error_msg"
             }
           },
           "401": {
             "description": "Unauthorized",
             "schema": {
-              "$ref": "#/definitions/Error%20Message"
+              "$ref": "#/definitions/error_msg"
             }
           },
           "204": {
@@ -303,19 +303,19 @@
           "500": {
             "description": "Internal Server Error",
             "schema": {
-              "$ref": "#/definitions/Error%20Message"
+              "$ref": "#/definitions/error_msg"
             }
           },
           "403": {
             "description": "Forbidden",
             "schema": {
-              "$ref": "#/definitions/Error%20Message"
+              "$ref": "#/definitions/error_msg"
             }
           },
           "401": {
             "description": "Unauthorized",
             "schema": {
-              "$ref": "#/definitions/Error%20Message"
+              "$ref": "#/definitions/error_msg"
             }
           },
           "200": {
@@ -323,7 +323,7 @@
             "schema": {
               "type": "array",
               "items": {
-                "$ref": "#/definitions/Geographical%20Area"
+                "$ref": "#/definitions/geographical_area"
               }
             }
           }
@@ -366,7 +366,7 @@
     }
   ],
   "definitions": {
-    "Intent": {
+    "intent": {
       "required": [
         "computingConstraints",
         "locationConstraints",
@@ -377,28 +377,28 @@
           "type": "array",
           "description": "List of Geographical Area Identifiers",
           "items": {
-            "$ref": "#/definitions/Location Constraint"
+            "$ref": "#/definitions/location_constraint"
           }
         },
         "computingConstraints": {
           "type": "array",
           "description": "List of Computing Constraints",
           "items": {
-            "$ref": "#/definitions/Computing Constraint"
+            "$ref": "#/definitions/computing_constraint"
           }
         },
         "networkingConstraints": {
           "type": "array",
           "description": "List of Networking Constraints",
           "items": {
-            "$ref": "#/definitions/Networking Constraint"
+            "$ref": "#/definitions/networking_constraint"
           }
         }
       },
       "type": "object",
       "additionalProperties": false
     },
-    "Location Constraint": {
+    "location_constraint": {
       "required": [
         "geographicalAreaId"
       ],
@@ -410,7 +410,7 @@
       "type": "object",
       "additionalProperties": false
     },
-    "Computing Constraint": {
+    "computing_constraint": {
       "required": [
         "applicationComponentId",
         "cpu",
@@ -434,7 +434,7 @@
       "type": "object",
       "additionalProperties": false
     },
-    "Networking Constraint": {
+    "networking_constraint": {
       "required": [
         "applicationComponentEndpointId",
         "applicationComponentId",
@@ -451,14 +451,14 @@
           "type": "array",
           "description": "List of Slice Profiles",
           "items": {
-            "$ref": "#/definitions/Slice Profile"
+            "$ref": "#/definitions/slice_profile"
           }
         }
       },
       "type": "object",
       "additionalProperties": false
     },
-    "Slice Profile": {
+    "slice_profile": {
       "required": [
         "profileParams",
         "sliceType"
@@ -477,7 +477,7 @@
           "description": "Slice Profile Parameters",
           "allOf": [
             {
-              "$ref": "#/definitions/Profile Params"
+              "$ref": "#/definitions/profile_params"
             }
           ]
         }
@@ -485,7 +485,7 @@
       "type": "object",
       "additionalProperties": false
     },
-    "Profile Params": {
+    "profile_params": {
       "required": [
         "availability",
         "errorRate",
@@ -546,7 +546,7 @@
       "type": "object",
       "additionalProperties": false
     },
-    "Error Message": {
+    "error_msg": {
       "required": [
         "message"
       ],
@@ -557,7 +557,7 @@
       },
       "type": "object"
     },
-    "Vertical Application Slice Status Information": {
+    "vas_info": {
       "required": [
         "nestId",
         "networkSliceStatus",
@@ -570,7 +570,7 @@
           "description": "Vertical Application Slice Status",
           "allOf": [
             {
-              "$ref": "#/definitions/Vertical Application Slice Status"
+              "$ref": "#/definitions/vas_status"
             }
           ]
         },
@@ -578,7 +578,7 @@
           "description": "Vertical Application Quota Information",
           "allOf": [
             {
-              "$ref": "#/definitions/K8s Config"
+              "$ref": "#/definitions/kubeconfig"
             }
           ]
         },
@@ -586,7 +586,7 @@
           "description": "5G Network Slice Status",
           "allOf": [
             {
-              "$ref": "#/definitions/5G Network Slice Status"
+              "$ref": "#/definitions/network_slice_status"
             }
           ]
         },
@@ -594,7 +594,7 @@
           "description": "Vertical Application Slice Configuration",
           "allOf": [
             {
-              "$ref": "#/definitions/Intent"
+              "$ref": "#/definitions/intent"
             }
           ]
         },
@@ -605,7 +605,7 @@
       "type": "object",
       "additionalProperties": false
     },
-    "Vertical Application Slice Status": {
+    "vas_status": {
       "required": [
         "status",
         "vasi"
@@ -629,7 +629,7 @@
       "type": "object",
       "additionalProperties": false
     },
-    "K8s Config": {
+    "kubeconfig": {
       "required": [
         "apiVersion",
         "clusters",
@@ -647,14 +647,14 @@
           "type": "array",
           "description": "K8s Clusters",
           "items": {
-            "$ref": "#/definitions/K8s Cluster"
+            "$ref": "#/definitions/cluster"
           }
         },
         "contexts": {
           "type": "array",
           "description": "K8s Contexts",
           "items": {
-            "$ref": "#/definitions/K8s Context"
+            "$ref": "#/definitions/context"
           }
         },
         "current-context": {
@@ -671,7 +671,7 @@
           "description": "K8s Preferences",
           "allOf": [
             {
-              "$ref": "#/definitions/K8s Preferences"
+              "$ref": "#/definitions/preferences"
             }
           ]
         },
@@ -679,14 +679,14 @@
           "type": "array",
           "description": "K8s Users",
           "items": {
-            "$ref": "#/definitions/K8s User"
+            "$ref": "#/definitions/user"
           }
         }
       },
       "type": "object",
       "additionalProperties": false
     },
-    "K8s Cluster": {
+    "cluster": {
       "required": [
         "cluster",
         "name"
@@ -696,7 +696,7 @@
           "description": "K8s Cluster",
           "allOf": [
             {
-              "$ref": "#/definitions/K8s Cluster Info"
+              "$ref": "#/definitions/cluster_info"
             }
           ]
         },
@@ -707,7 +707,7 @@
       "type": "object",
       "additionalProperties": false
     },
-    "K8s Cluster Info": {
+    "cluster_info": {
       "required": [
         "certificate-authority-data",
         "server"
@@ -723,7 +723,7 @@
       "type": "object",
       "additionalProperties": false
     },
-    "K8s Context": {
+    "context": {
       "required": [
         "context",
         "name"
@@ -733,7 +733,7 @@
           "description": "K8s Context",
           "allOf": [
             {
-              "$ref": "#/definitions/K8s Context Info"
+              "$ref": "#/definitions/context_info"
             }
           ]
         },
@@ -744,7 +744,7 @@
       "type": "object",
       "additionalProperties": false
     },
-    "K8s Context Info": {
+    "context_info": {
       "required": [
         "cluster",
         "namespace",
@@ -764,12 +764,12 @@
       "type": "object",
       "additionalProperties": false
     },
-    "K8s Preferences": {
+    "preferences": {
       "properties": {},
       "type": "object",
       "additionalProperties": false
     },
-    "K8s User": {
+    "user": {
       "required": [
         "name",
         "user"
@@ -779,7 +779,7 @@
           "description": "K8s User",
           "allOf": [
             {
-              "$ref": "#/definitions/K8s User Info"
+              "$ref": "#/definitions/user_info"
             }
           ]
         },
@@ -790,7 +790,7 @@
       "type": "object",
       "additionalProperties": false
     },
-    "K8s User Info": {
+    "user_info": {
       "required": [
         "client-key-data",
         "token"
@@ -806,7 +806,7 @@
       "type": "object",
       "additionalProperties": false
     },
-    "5G Network Slice Status": {
+    "network_slice_status": {
       "required": [
         "networkSliceId",
         "status"
@@ -830,7 +830,7 @@
       "type": "object",
       "additionalProperties": false
     },
-    "Scale Intent": {
+    "scale_intent": {
       "required": [
         "computingConstraints",
         "locationConstraints"
@@ -840,21 +840,21 @@
           "type": "array",
           "description": "List of Geographical Area Identifiers",
           "items": {
-            "$ref": "#/definitions/Location Constraint"
+            "$ref": "#/definitions/location_constraint"
           }
         },
         "computingConstraints": {
           "type": "array",
           "description": "List of Computing Constraints",
           "items": {
-            "$ref": "#/definitions/Computing Constraint"
+            "$ref": "#/definitions/computing_constraint"
           }
         }
       },
       "type": "object",
       "additionalProperties": false
     },
-    "Geographical Area": {
+    "geographical_area": {
       "required": [
         "coverageRadio",
         "geographicalAreaId",
