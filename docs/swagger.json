@@ -3,50 +3,6 @@
   "basePath": "/",
   "paths": {
     "/lcm/instances/": {
-      "get": {
-        "responses": {
-          "500": {
-            "description": "Internal Server Error",
-            "schema": {
-              "$ref": "#/definitions/error_msg"
-            }
-          },
-          "403": {
-            "description": "Forbidden",
-            "schema": {
-              "$ref": "#/definitions/error_msg"
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "schema": {
-              "$ref": "#/definitions/error_msg"
-            }
-          },
-          "200": {
-            "description": "Success",
-            "schema": {
-              "type": "array",
-              "items": {
-                "$ref": "#/definitions/vas_info"
-              }
-            }
-          }
-        },
-        "operationId": "Get the list of Vertical Application Slice Instances.",
-        "parameters": [
-          {
-            "name": "X-Fields",
-            "in": "header",
-            "type": "string",
-            "format": "mask",
-            "description": "An optional fields mask"
-          }
-        ],
-        "tags": [
-          "lcm/instances"
-        ]
-      },
       "post": {
         "responses": {
           "500": {
@@ -95,6 +51,50 @@
             "description": "Context of K8s cluster",
             "name": "context",
             "type": "string"
+          }
+        ],
+        "tags": [
+          "lcm/instances"
+        ]
+      },
+      "get": {
+        "responses": {
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "$ref": "#/definitions/error_msg"
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "schema": {
+              "$ref": "#/definitions/error_msg"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/error_msg"
+            }
+          },
+          "200": {
+            "description": "Success",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/vas_info"
+              }
+            }
+          }
+        },
+        "operationId": "Get the list of Vertical Application Slice Instances.",
+        "parameters": [
+          {
+            "name": "X-Fields",
+            "in": "header",
+            "type": "string",
+            "format": "mask",
+            "description": "An optional fields mask"
           }
         ],
         "tags": [
@@ -486,14 +486,6 @@
       "additionalProperties": false
     },
     "profile_params": {
-      "required": [
-        "availability",
-        "errorRate",
-        "isolationLevel",
-        "maximumNumberUE",
-        "uEDensity",
-        "uESpeed"
-      ],
       "properties": {
         "availability": {
           "type": "number"
