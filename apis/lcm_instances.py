@@ -9,17 +9,17 @@ api = Namespace('lcm/instances', description='Application-Aware NSM LCM APIs')
 
 # Intent Model Specification
 
-location_constraint = api.model('Location Constraint', {
+location_constraint = api.model('location_constraint', {
     'geographicalAreaId': fields.String(required=True)}, strict=True)
 
-computing_constraint = api.model('Computing Constraint', {
+computing_constraint = api.model('computing_constraint', {
     'applicationComponentId': fields.String(required=True),
     'ram': fields.String(required=True),
     'cpu': fields.String(required=True),
     'storage': fields.String(required=True)
 }, strict=True)
 
-profile_params = api.model('Profile Params', {
+profile_params = api.model('profile_params', {
     'availability': fields.Float(required=True),
     'errorRate': fields.Float(required=True),
     'isolationLevel': fields.String(enum=['NO_ISOLATION', 'LOGICAL'], required=True),
@@ -35,19 +35,19 @@ profile_params = api.model('Profile Params', {
     'jitter': fields.Float,
     'priorityLevel': fields.Integer
 }, strict=True)
-slice_profile = api.model('Slice Profile', {
+slice_profile = api.model('slice_profile', {
     'sliceType': fields.String(enum=['EMBB', 'URLLC', 'MMTC'], required=True),
     'profileParams': fields.Nested(profile_params, required=True,
                                    description='Slice Profile Parameters', skip_none=True)
 }, strict=True)
-networking_constraint = api.model('Networking Constraint', {
+networking_constraint = api.model('networking_constraint', {
     'applicationComponentId': fields.String(required=True),
     'applicationComponentEndpointId': fields.String(required=True),
     'sliceProfiles': fields.Nested(slice_profile, required=True, as_list=True,
                                    description='List of Slice Profiles', skip_none=True)
 }, strict=True)
 
-intent = api.model('Intent', {
+intent = api.model('intent', {
     'locationConstraints': fields.Nested(location_constraint, required=True, as_list=True,
                                          description='List of Geographical Area Identifiers', skip_none=True),
     'computingConstraints': fields.Nested(computing_constraint, required=True, as_list=True,
@@ -56,7 +56,7 @@ intent = api.model('Intent', {
                                            description='List of Networking Constraints', skip_none=True)
 }, strict=True)
 
-scale_intent = api.model('Scale Intent', {
+scale_intent = api.model('scale_intent', {
     'locationConstraints': fields.Nested(location_constraint, required=True, as_list=True,
                                          description='List of Geographical Area Identifiers', skip_none=True),
     'computingConstraints': fields.Nested(computing_constraint, required=True, as_list=True,
@@ -65,45 +65,45 @@ scale_intent = api.model('Scale Intent', {
 
 # Vertical Application Slice Status Model Specification
 
-vas_status = api.model('Vertical Application Slice Status', {
+vas_status = api.model('vas_status', {
     'vasi': fields.String(required=True),
     'status': fields.String(enum=['INSTANTIATING', 'INSTANTIATED',
                                   'FAILED', 'TERMINATING', 'TERMINATED'], required=True)
 }, strict=True)
 
-network_slice_status = api.model('5G Network Slice Status', {
+network_slice_status = api.model('network_slice_status', {
     'networkSliceId': fields.String(required=True),
     'status': fields.String(enum=['INSTANTIATING', 'INSTANTIATED',
                                   'FAILED', 'TERMINATING', 'TERMINATED'], required=True)
 }, strict=True)
 
-cluster_info = api.model('K8s Cluster Info', {
+cluster_info = api.model('cluster_info', {
     'certificate-authority-data': fields.String(required=True),
     'server': fields.String(required=True)
 }, strict=True)
-cluster = api.model('K8s Cluster', {
+cluster = api.model('cluster', {
     'cluster': fields.Nested(cluster_info, required=True, description='K8s Cluster', skip_none=True),
     'name': fields.String(required=True)
 }, strict=True)
-context_info = api.model('K8s Context Info', {
+context_info = api.model('context_info', {
     'cluster': fields.String(required=True),
     'user': fields.String(required=True),
     'namespace': fields.String(required=True)
 }, strict=True)
-context = api.model('K8s Context', {
+context = api.model('context', {
     'context': fields.Nested(context_info, required=True, description='K8s Context', skip_none=True),
     'name': fields.String(required=True)
 }, strict=True)
-preferences = api.model('K8s Preferences', {}, strict=True)
-user_info = api.model('K8s User Info', {
+preferences = api.model('preferences', {}, strict=True)
+user_info = api.model('user_info', {
     'token': fields.String(required=True),
     'client-key-data': fields.String(required=True)
 }, strict=True)
-user = api.model('K8s User', {
+user = api.model('user', {
     'user': fields.Nested(user_info, required=True, description='K8s User', skip_none=True),
     'name': fields.String(required=True)
 }, strict=True)
-kubeconfig = api.model('K8s Config', {
+kubeconfig = api.model('kubeconfig', {
     'apiVersion': fields.String(required=True),
     'clusters': fields.Nested(cluster, required=True, as_list=True, description='K8s Clusters', skip_none=True),
     'contexts': fields.Nested(context, required=True, as_list=True, description='K8s Contexts', skip_none=True),
@@ -113,7 +113,7 @@ kubeconfig = api.model('K8s Config', {
     'users': fields.Nested(user, required=True, as_list=True, description='K8s Users', skip_none=True)
 }, strict=True)
 
-vas_info = api.model('Vertical Application Slice Status Information', {
+vas_info = api.model('vas_info', {
     'vasStatus': fields.Nested(vas_status, required=True,
                                description='Vertical Application Slice Status', skip_none=True),
     'vaQuotaInfo': fields.Nested(kubeconfig, required=True,
@@ -127,7 +127,7 @@ vas_info = api.model('Vertical Application Slice Status Information', {
 
 # Error Message Model Specification
 
-error_msg = api.model('Error Message', {'message': fields.String(required=True)})
+error_msg = api.model('error_msg', {'message': fields.String(required=True)})
 
 
 class VASPostSchema(Schema):

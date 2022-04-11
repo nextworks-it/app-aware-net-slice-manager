@@ -4,7 +4,7 @@ api = Namespace('location', description='Application-Aware NSM Location APIs')
 
 # Geographical Area Model Specification
 
-geographical_area = api.model('Geographical Area', {
+geographical_area = api.model('geographical_area', {
     'geographicalAreaId': fields.String(required=True),
     'latitude': fields.Float(required=True),
     'longitude': fields.Float(required=True),
@@ -13,7 +13,7 @@ geographical_area = api.model('Geographical Area', {
 
 # Error Message Model Specification
 
-error_msg = api.model('Error Message', {'message': fields.String(required=True)})
+error_msg = api.model('error_msg', {'message': fields.String(required=True)})
 
 
 @api.route('/')
