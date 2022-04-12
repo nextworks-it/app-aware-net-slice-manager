@@ -2,3 +2,5 @@ Flask
 flask-restx
 kubernetes
 marshmallow
+python-dotenv
+psycopg2-binary

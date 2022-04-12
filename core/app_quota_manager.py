@@ -1,7 +1,7 @@
 from kubernetes import client, config
 from kubernetes.config.kube_config import ConfigException
 from kubernetes.client.rest import ApiException
-from core import log
+from core import quota_log
 from core import exceptions
 from base64 import b64decode
 import uuid
@@ -16,7 +16,7 @@ def create_constrained_ns(core_api: client.CoreV1Api, host: str, computing_const
     ns = client.V1Namespace(metadata=client.V1ObjectMeta(name=ns_name))
     core_api.create_namespace(ns)
 
-    log.info('Created Namespace %s in K8s cluster %s.', ns_name, host)
+    quota_log.info('Created Namespace %s in K8s cluster %s.', ns_name, host)
 
     # Create the quota resource to constrain the created namespace
     rq = client.V1ResourceQuota(
@@ -31,7 +31,7 @@ def create_constrained_ns(core_api: client.CoreV1Api, host: str, computing_const
     )
     core_api.create_namespaced_resource_quota(ns_name, rq)
 
-    log.info('Created ResourceQuota %s-quota in K8s cluster %s.', ns_name, host)
+    quota_log.info('Created ResourceQuota %s-quota in K8s cluster %s.', ns_name, host)
 
     return ns_name
 
@@ -43,7 +43,7 @@ def create_constrained_sa(core_api: client.CoreV1Api, host: str,
     sa = client.V1ServiceAccount(metadata=client.V1ObjectMeta(name=sa_name))
     core_api.create_namespaced_service_account(ns_name, sa)
 
-    log.info('Created ServiceAccount %s in K8s cluster %s.', sa_name, host)
+    quota_log.info('Created ServiceAccount %s in K8s cluster %s.', sa_name, host)
 
     # Create ClusterRole to define Service Accounts permissions in given namespace(s)
     c_role = client.V1ClusterRole(
@@ -63,10 +63,10 @@ def create_constrained_sa(core_api: client.CoreV1Api, host: str,
     )
     try:
         rbac_api.create_cluster_role(c_role)
-        log.info('Created ClusterRole ns-sa-permissions in K8s cluster %s.', host)
+        quota_log.info('Created ClusterRole ns-sa-permissions in K8s cluster %s.', host)
     except ApiException as e:
         if e.status == 409:
-            log.info('ClusterRole already exists.')
+            quota_log.info('ClusterRole already exists.')
         else:
             raise e
 
@@ -88,7 +88,7 @@ def create_constrained_sa(core_api: client.CoreV1Api, host: str,
     )
     rbac_api.create_namespaced_role_binding(ns_name, rb)
 
-    log.info('Created RoleBinding %s-role-binding in K8s cluster %s.', sa_name, host)
+    quota_log.info('Created RoleBinding %s-role-binding in K8s cluster %s.', sa_name, host)
 
     return sa_name
 
@@ -105,7 +105,7 @@ def allocate_quota(computing_constraint, context: str):
             config.load_kube_config(context=context)
     except ConfigException:
         # If .kube/config context is missing
-        log.error('Missing context ' + context + ' in .kube/config, abort.')
+        quota_log.error('Missing context ' + context + ' in .kube/config, abort.')
         raise exceptions.MissingContextException('Missing context ' + context)
 
     # Get host of K8s cluster
