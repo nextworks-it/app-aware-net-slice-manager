@@ -3,3 +3,4 @@ flask-restx
 kubernetes
 marshmallow
 psycopg2-binary
+aenum
