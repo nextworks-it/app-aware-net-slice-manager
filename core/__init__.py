@@ -49,7 +49,7 @@ commands = (
     """,
     """
     CREATE TABLE IF NOT EXISTS network_slice_statuses(
-        network_slice_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        network_slice_id UUID PRIMARY KEY,
         network_slice_status VARCHAR(255) NOT NULL
     )
     """,
@@ -59,6 +59,8 @@ commands = (
         vertical_application_slice_status VARCHAR(255) NOT NULL,
         vertical_application_quota_status UUID,
         network_slice_status UUID,
+        intent JSON NOT NULL,
+        nest_id VARCHAR(255) NOT NULL,
         FOREIGN KEY (vertical_application_quota_status) 
             REFERENCES vertical_application_quota_statuses (vertical_application_quota_id)
             ON UPDATE CASCADE ON DELETE CASCADE,
