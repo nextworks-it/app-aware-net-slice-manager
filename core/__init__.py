@@ -60,7 +60,7 @@ commands = (
         vertical_application_quota_status UUID,
         network_slice_status UUID,
         intent JSON NOT NULL,
-        nest_id VARCHAR(255) NOT NULL,
+        nest_id VARCHAR(255),
         FOREIGN KEY (vertical_application_quota_status) 
             REFERENCES vertical_application_quota_statuses (vertical_application_quota_id)
             ON UPDATE CASCADE ON DELETE CASCADE,
