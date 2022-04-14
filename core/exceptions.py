@@ -10,7 +10,7 @@ class QuantitiesMalformedException(Exception):
     pass
 
 
-class EntryCreationException(Exception):
+class DBException(Exception):
     pass
 
 

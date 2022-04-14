@@ -1,6 +1,6 @@
 from core import db_conn, db_log
 from psycopg2 import DatabaseError
-from core.exceptions import EntryCreationException, NotExistingEntityException
+from core.exceptions import DBException, NotExistingEntityException
 import json
 
 
@@ -22,7 +22,7 @@ def insert_va_quota_status(kubeconfig, vertical_application_slice_id: str):
         return va_quota_id
     except (Exception, DatabaseError) as error:
         db_log.error(str(error))
-        raise EntryCreationException('Error while creating new entry for vertical application quota: ' + str(error))
+        raise DBException('Error while creating vertical_application_quota_status: ' + str(error))
 
 
 def get_va_quota_statuses():
@@ -37,7 +37,7 @@ def get_va_quota_statuses():
         return va_quota_statuses
     except (Exception, DatabaseError) as error:
         db_log.error(str(error))
-        raise EntryCreationException('Error while fetching vertical application quota entries: ' + str(error))
+        raise DBException('Error while fetching vertical_application_quota_statuses: ' + str(error))
 
 
 def get_va_quota_status(vertical_application_quota_id: str):
@@ -56,7 +56,7 @@ def get_va_quota_status(vertical_application_quota_id: str):
         return va_quota_status
     except DatabaseError as error:
         db_log.error(str(error))
-        raise EntryCreationException('Error while fetching vertical application quota entry: ' + str(error))
+        raise DBException('Error while fetching vertical_application_quota_status: ' + str(error))
 
 
 def insert_network_slice_status(network_slice_id: str, network_slice_status: str):
@@ -71,7 +71,7 @@ def insert_network_slice_status(network_slice_id: str, network_slice_status: str
         db_log.info('Created new network_slice_status with ID %s', network_slice_id)
     except (Exception, DatabaseError) as error:
         db_log.error(str(error))
-        raise EntryCreationException('Error while creating new entry for network slice: ' + str(error))
+        raise DBException('Error while creating network_slice_status: ' + str(error))
 
 
 def update_network_slice_status(network_slice_id: str, network_slice_status: str):
@@ -86,7 +86,7 @@ def update_network_slice_status(network_slice_id: str, network_slice_status: str
         db_log.info('Updated network_slice_status %s with status %s', network_slice_id, network_slice_status)
     except (Exception, DatabaseError) as error:
         db_log.error(str(error))
-        raise EntryCreationException('Error while updating entry for network slice: ' + str(error))
+        raise DBException('Error while updating network_slice_status: ' + str(error))
 
 
 def get_network_slice_statuses():
@@ -101,7 +101,7 @@ def get_network_slice_statuses():
         return network_slice_statuses
     except (Exception, DatabaseError) as error:
         db_log.error(str(error))
-        raise EntryCreationException('Error while fetching network slice statuses entries: ' + str(error))
+        raise DBException('Error while fetching network_slice_statuses: ' + str(error))
 
 
 def get_network_slice_status(network_slice_id: str):
@@ -119,7 +119,7 @@ def get_network_slice_status(network_slice_id: str):
         return network_slice_status
     except DatabaseError as error:
         db_log.error(str(error))
-        raise EntryCreationException('Error while fetching network slice status entry: ' + str(error))
+        raise DBException('Error while fetching network_slice_status: ' + str(error))
 
 
 def insert_va_status(vertical_application_slice_status: str, intent):
@@ -140,7 +140,7 @@ def insert_va_status(vertical_application_slice_status: str, intent):
         return va_status_id
     except (Exception, DatabaseError) as error:
         db_log.error(str(error))
-        raise EntryCreationException('Error while creating new entry for vertical application status: ' + str(error))
+        raise DBException('Error while creating vertical_application_status: ' + str(error))
 
 
 def execute_va_status_update(command: str, vertical_application_slice_id: str, update: str):
@@ -153,7 +153,7 @@ def execute_va_status_update(command: str, vertical_application_slice_id: str, u
         db_log.info('Updated va_status %s', vertical_application_slice_id)
     except (Exception, DatabaseError) as error:
         db_log.error(str(error))
-        raise EntryCreationException('Error while updating entry for vertical application status: ' + str(error))
+        raise DBException('Error while updating vertical_application_status: ' + str(error))
 
 
 def update_va_with_status(vertical_application_slice_id: str, vertical_application_slice_status: str):
@@ -192,7 +192,7 @@ def get_va_statuses():
         return va_statuses
     except (Exception, DatabaseError) as error:
         db_log.error(str(error))
-        raise EntryCreationException('Error while fetching vertical application statuses entries: ' + str(error))
+        raise DBException('Error while fetching vertical_application_statuses: ' + str(error))
 
 
 def get_va_status(vertical_application_slice_id: str):
@@ -210,4 +210,4 @@ def get_va_status(vertical_application_slice_id: str):
         return va_status
     except DatabaseError as error:
         db_log.error(str(error))
-        raise EntryCreationException('Error while fetching network slice status entry: ' + str(error))
+        raise DBException('Error while fetching vertical_application_status: ' + str(error))
