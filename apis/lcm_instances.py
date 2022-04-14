@@ -2,8 +2,11 @@ from flask_restx import Namespace, Resource, fields
 from flask import request, abort
 from core import app_quota_manager
 from core import exceptions
+from core import db_manager
+from core.enums import InstantiationStatus
 from marshmallow import Schema
 import marshmallow.fields
+import uuid
 
 api = Namespace('lcm/instances', description='Application-Aware NSM LCM APIs')
 
@@ -116,7 +119,7 @@ kubeconfig = api.model('kubeconfig', {
 vas_info = api.model('vas_info', {
     'vasStatus': fields.Nested(vas_status, required=True,
                                description='Vertical Application Slice Status', skip_none=True),
-    'vaQuotaInfo': fields.Nested(kubeconfig, required=True,
+    'vaQuotaInfo': fields.Nested(kubeconfig, required=True, as_list=True,
                                  description='Vertical Application Quota Information', skip_none=True),
     'networkSliceStatus': fields.Nested(network_slice_status, required=True,
                                         description='5G Network Slice Status', skip_none=True),
@@ -158,20 +161,94 @@ class VASCtrl(Resource):
     @api.response(403, 'Forbidden', model=error_msg)
     @api.response(500, 'Internal Server Error', model=error_msg)
     def post(self):
+        # Validate request parameters
         errors = vas_post_schema.validate(request.args)
         if errors:
             abort(400, str(errors))
 
         vas_intent = request.json
 
+        # Create entry for vertical application slice
+        vertical_application_slice_id = None
+        try:
+            vertical_application_slice_id = \
+                db_manager.insert_va_status(InstantiationStatus.INSTANTIATING.name, vas_intent)
+        # Abort if DB entry cannot be created
+        except exceptions.DBException as e:
+            abort(500, str(e))
+
+        # Allocate K8s quota for each compute constraint
         k8s_configs = None
         try:
             k8s_configs = app_quota_manager.allocate_quotas(vas_intent['computingConstraints'],
                                                             request.args.get('context'))
+        # Abort if quota cannot be allocated
         except (exceptions.MissingContextException, exceptions.QuantitiesMalformedException) as e:
+            try:
+                db_manager.update_va_with_status(vertical_application_slice_id, InstantiationStatus.FAILED.name)
+            # Abort if DB entry cannot be updated
+            except exceptions.DBException as e2:
+                abort(500, str(e2))
             abort(400, str(e))
 
-        return k8s_configs
+        # Create DB entry for each allocated quota binding them to the
+        # vertical_application_slice_id previously generated
+        try:
+            for k8s_config in k8s_configs:
+                db_manager.insert_va_quota_status(k8s_config, vertical_application_slice_id)
+        # Abort if DB entry cannot be created
+        except exceptions.DBException as e:
+            try:
+                db_manager.update_va_with_status(vertical_application_slice_id, InstantiationStatus.FAILED.name)
+            # Abort if DB entry cannot be updated
+            except exceptions.DBException:
+                pass
+            finally:
+                abort(500, str(e))
+
+        # Mocked intent - nest id mapping
+        nest_id = str(uuid.uuid4())
+        try:
+            db_manager.update_va_status_with_nest_id(vertical_application_slice_id, nest_id)
+        # Abort if DB entry cannot be updated
+        except exceptions.DBException as e:
+            try:
+                db_manager.update_va_with_status(vertical_application_slice_id, InstantiationStatus.FAILED.name)
+            # Abort if DB entry cannot be updated
+            except exceptions.DBException:
+                pass
+            finally:
+                abort(500, str(e))
+
+        # Mocked network slice instantiation request
+        ns_id = str(uuid.uuid4())
+        try:
+            db_manager.insert_network_slice_status(ns_id, InstantiationStatus.INSTANTIATING.name)
+            db_manager.update_va_status_with_ns(vertical_application_slice_id, ns_id)
+        # Abort if DB entries cannot be created and/or updated
+        except exceptions.DBException as e:
+            try:
+                db_manager.update_va_with_status(vertical_application_slice_id, InstantiationStatus.FAILED.name)
+            # Abort if DB entry cannot be updated
+            except exceptions.DBException:
+                pass
+            finally:
+                abort(500, str(e))
+
+        # Mocked network slice instantiated
+        try:
+            db_manager.update_network_slice_status(ns_id, InstantiationStatus.INSTANTIATED.name)
+            db_manager.update_va_with_status(vertical_application_slice_id, InstantiationStatus.INSTANTIATED.name)
+        except exceptions.DBException as e:
+            try:
+                db_manager.update_va_with_status(vertical_application_slice_id, InstantiationStatus.FAILED.name)
+            # Abort if DB entry cannot be updated
+            except exceptions.DBException:
+                pass
+            finally:
+                abort(500, str(e))
+
+        return vertical_application_slice_id
 
 
 @api.route('/<uuid:vasi>')
