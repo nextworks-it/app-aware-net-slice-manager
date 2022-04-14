@@ -8,3 +8,11 @@ class MissingContextException(Exception):
 
 class QuantitiesMalformedException(Exception):
     pass
+
+
+class EntryCreationException(Exception):
+    pass
+
+
+class NotExistingEntityException(Exception):
+    pass
