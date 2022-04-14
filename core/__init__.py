@@ -42,12 +42,6 @@ db_log.info('Successfully connected to %s:%s/%s', db['host'], db['port'], db['da
 # Initialize PostgreSQL DBs, skip table creation if exists
 commands = (
     """
-    CREATE TABLE IF NOT EXISTS vertical_application_quota_statuses(
-        vertical_application_quota_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        vertical_application_quota_kubeconfig JSON NOT NULL
-    )
-    """,
-    """
     CREATE TABLE IF NOT EXISTS network_slice_statuses(
         network_slice_id UUID PRIMARY KEY,
         network_slice_status VARCHAR(255) NOT NULL
@@ -57,15 +51,21 @@ commands = (
     CREATE TABLE IF NOT EXISTS vertical_application_statuses(
         vertical_application_slice_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         vertical_application_slice_status VARCHAR(255) NOT NULL,
-        vertical_application_quota_status UUID,
         network_slice_status UUID,
         intent JSON NOT NULL,
         nest_id VARCHAR(255),
-        FOREIGN KEY (vertical_application_quota_status) 
-            REFERENCES vertical_application_quota_statuses (vertical_application_quota_id)
-            ON UPDATE CASCADE ON DELETE CASCADE,
         FOREIGN KEY (network_slice_status)
             REFERENCES network_slice_statuses (network_slice_id)
+            ON UPDATE CASCADE ON DELETE CASCADE
+    )
+    """,
+    """
+    CREATE TABLE IF NOT EXISTS vertical_application_quota_statuses(
+        vertical_application_quota_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        vertical_application_quota_kubeconfig JSON NOT NULL,
+        vertical_application_slice_id UUID NOT NULL,
+        FOREIGN KEY (vertical_application_slice_id)
+            REFERENCES vertical_application_statuses (vertical_application_slice_id)
             ON UPDATE CASCADE ON DELETE CASCADE
     )
     """
