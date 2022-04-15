@@ -7,7 +7,7 @@ import json
 def insert_va_quota_status(kubeconfig, vertical_application_slice_id: str):
     # Create a new entry <uuid, kubeconfig> in the DB for a vertical application quota
     command = """
-    INSERT INTO vertical_application_quota_statuses(vertical_application_quota_kubeconfig, 
+    INSERT INTO vertical_application_quota_status(vertical_application_quota_kubeconfig, 
     vertical_application_slice_id) VALUES (%s, %s) RETURNING vertical_application_quota_id
     """
     try:
@@ -25,24 +25,24 @@ def insert_va_quota_status(kubeconfig, vertical_application_slice_id: str):
         raise DBException('Error while creating vertical_application_quota_status: ' + str(error))
 
 
-def get_va_quota_statuses():
+def get_va_quota_status():
     # Retrieve all va_quota_status entries from the DB
-    command = """SELECT * FROM vertical_application_quota_statuses"""
+    command = """SELECT * FROM vertical_application_quota_status"""
     try:
         cur = db_conn.cursor()
         cur.execute(command)
-        va_quota_statuses = cur.fetchall()
+        va_quota_status = cur.fetchall()
         cur.close()
 
-        return va_quota_statuses
+        return va_quota_status
     except (Exception, DatabaseError) as error:
         db_log.error(str(error))
-        raise DBException('Error while fetching vertical_application_quota_statuses: ' + str(error))
+        raise DBException('Error while fetching vertical_application_quota_status: ' + str(error))
 
 
-def get_va_quota_status(vertical_application_quota_id: str):
+def get_va_quota_status_by_id(vertical_application_quota_id: str):
     # Retrieve va_quota_status entry by vertical_application_quota_id (PRIMARY KEY)
-    command = """SELECT * FROM vertical_application_quota_statuses WHERE vertical_application_quota_id = (%s)"""
+    command = """SELECT * FROM vertical_application_quota_status WHERE vertical_application_quota_id = (%s)"""
     try:
         cur = db_conn.cursor()
         cur.execute(command, (vertical_application_quota_id,))
@@ -61,7 +61,7 @@ def get_va_quota_status(vertical_application_quota_id: str):
 
 def insert_network_slice_status(network_slice_id: str, network_slice_status: str):
     # Create a new entry <network_slice_id, network_slice_status> in the DB for a network slice
-    command = """INSERT INTO network_slice_statuses(network_slice_id, network_slice_status) VALUES (%s, %s)"""
+    command = """INSERT INTO network_slice_status(network_slice_id, network_slice_status) VALUES (%s, %s)"""
     try:
         cur = db_conn.cursor()
         cur.execute(command, (network_slice_id, network_slice_status))
@@ -76,7 +76,7 @@ def insert_network_slice_status(network_slice_id: str, network_slice_status: str
 
 def update_network_slice_status(network_slice_id: str, network_slice_status: str):
     # Update a network_slice_status status
-    command = """UPDATE network_slice_statuses SET network_slice_status = %s WHERE network_slice_id = %s"""
+    command = """UPDATE network_slice_status SET network_slice_status = %s WHERE network_slice_id = %s"""
     try:
         cur = db_conn.cursor()
         cur.execute(command, (network_slice_status, network_slice_id))
@@ -89,24 +89,24 @@ def update_network_slice_status(network_slice_id: str, network_slice_status: str
         raise DBException('Error while updating network_slice_status: ' + str(error))
 
 
-def get_network_slice_statuses():
+def get_network_slice_status():
     # Retrieve all network_slice_status entries from the DB
-    command = """SELECT * FROM network_slice_statuses"""
+    command = """SELECT * FROM network_slice_status"""
     try:
         cur = db_conn.cursor()
         cur.execute(command)
-        network_slice_statuses = cur.fetchall()
+        network_slice_status = cur.fetchall()
         cur.close()
 
-        return network_slice_statuses
+        return network_slice_status
     except (Exception, DatabaseError) as error:
         db_log.error(str(error))
-        raise DBException('Error while fetching network_slice_statuses: ' + str(error))
+        raise DBException('Error while fetching network_slice_status: ' + str(error))
 
 
-def get_network_slice_status(network_slice_id: str):
+def get_network_slice_status_by_id(network_slice_id: str):
     # Retrieve network_slice_status entry by network_slice_id (PRIMARY KEY)
-    command = """SELECT * FROM network_slice_statuses WHERE network_slice_id = (%s)"""
+    command = """SELECT * FROM network_slice_status WHERE network_slice_id = (%s)"""
     try:
         cur = db_conn.cursor()
         cur.execute(command, (network_slice_id,))
@@ -125,7 +125,7 @@ def get_network_slice_status(network_slice_id: str):
 def insert_va_status(vertical_application_slice_status: str, intent):
     # Create a new entry <uuid, vertical_application_slice_status, intent> in the DB for a vertical application status
     command = """
-    INSERT INTO vertical_application_statuses(vertical_application_slice_status, intent) 
+    INSERT INTO vertical_application_slice_status(vertical_application_slice_status, intent) 
     VALUES (%s, %s) RETURNING vertical_application_slice_id
     """
     try:
@@ -140,7 +140,7 @@ def insert_va_status(vertical_application_slice_status: str, intent):
         return va_status_id
     except (Exception, DatabaseError) as error:
         db_log.error(str(error))
-        raise DBException('Error while creating vertical_application_status: ' + str(error))
+        raise DBException('Error while creating vertical_application_slice_status: ' + str(error))
 
 
 def execute_va_status_update(command: str, vertical_application_slice_id: str, update: str):
@@ -153,13 +153,13 @@ def execute_va_status_update(command: str, vertical_application_slice_id: str, u
         db_log.info('Updated va_status %s', vertical_application_slice_id)
     except (Exception, DatabaseError) as error:
         db_log.error(str(error))
-        raise DBException('Error while updating vertical_application_status: ' + str(error))
+        raise DBException('Error while updating vertical_application_slice_status: ' + str(error))
 
 
 def update_va_with_status(vertical_application_slice_id: str, vertical_application_slice_status: str):
     # Update the status of a va_status entry by ID
     command = """
-    UPDATE vertical_application_statuses SET vertical_application_slice_status = %s 
+    UPDATE vertical_application_slice_status SET vertical_application_slice_status = %s 
     WHERE vertical_application_slice_id = %s
     """
     execute_va_status_update(command, vertical_application_slice_id, vertical_application_slice_status)
@@ -168,7 +168,7 @@ def update_va_with_status(vertical_application_slice_id: str, vertical_applicati
 def update_va_status_with_ns(vertical_application_slice_id: str, network_slice_status: str):
     # Update the network_slice_status of a va_status entry by ID
     command = """
-    UPDATE vertical_application_statuses SET network_slice_status = %s 
+    UPDATE vertical_application_slice_status SET network_slice_status = %s 
     WHERE vertical_application_slice_id = %s
     """
     execute_va_status_update(command, vertical_application_slice_id, network_slice_status)
@@ -176,28 +176,28 @@ def update_va_status_with_ns(vertical_application_slice_id: str, network_slice_s
 
 def update_va_status_with_nest_id(vertical_application_slice_id: str, nest_id: str):
     # Update the nest_id of a va_status entry by ID
-    command = """UPDATE vertical_application_statuses SET nest_id = %s WHERE vertical_application_slice_id = %s"""
+    command = """UPDATE vertical_application_slice_status SET nest_id = %s WHERE vertical_application_slice_id = %s"""
     execute_va_status_update(command, vertical_application_slice_id, nest_id)
 
 
-def get_va_statuses():
+def get_va_status():
     # Retrieve all va_status entries from the DB
-    command = """SELECT * FROM vertical_application_statuses"""
+    command = """SELECT * FROM vertical_application_slice_status"""
     try:
         cur = db_conn.cursor()
         cur.execute(command)
-        va_statuses = cur.fetchall()
+        va_status = cur.fetchall()
         cur.close()
 
-        return va_statuses
+        return va_status
     except (Exception, DatabaseError) as error:
         db_log.error(str(error))
-        raise DBException('Error while fetching vertical_application_statuses: ' + str(error))
+        raise DBException('Error while fetching vertical_application_slice_status: ' + str(error))
 
 
-def get_va_status(vertical_application_slice_id: str):
+def get_va_status_by_id(vertical_application_slice_id: str):
     # Retrieve va_status entry by vertical_application_slice_id (PRIMARY KEY)
-    command = """SELECT * FROM vertical_application_statuses WHERE vertical_application_slice_id = (%s)"""
+    command = """SELECT * FROM vertical_application_slice_status WHERE vertical_application_slice_id = (%s)"""
     try:
         cur = db_conn.cursor()
         cur.execute(command, (vertical_application_slice_id,))
@@ -210,4 +210,4 @@ def get_va_status(vertical_application_slice_id: str):
         return va_status
     except DatabaseError as error:
         db_log.error(str(error))
-        raise DBException('Error while fetching vertical_application_status: ' + str(error))
+        raise DBException('Error while fetching vertical_application_slice_status: ' + str(error))
