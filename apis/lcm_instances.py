@@ -150,12 +150,16 @@ class VASCtrl(Resource):
     @api.response(403, 'Forbidden', model=error_msg)
     @api.response(500, 'Internal Server Error', model=error_msg)
     def get(self):
+        # Get all Vertical Application Slice Status
         _vas_status = None
         try:
             _vas_status = db_manager.get_va_status()
         except exceptions.DBException as e:
             abort(500, str(e))
 
+        # Build the info model for each Vertical Application Slice Status
+        # retrieving the correspondent Network Slice Status and Vertical
+        # Application Quota Status
         _vas_info = []
         for status in _vas_status:
             vasi = status[0]
