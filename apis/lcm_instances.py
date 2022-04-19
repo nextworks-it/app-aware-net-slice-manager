@@ -298,8 +298,41 @@ class VASCtrlByID(Resource):
     @api.response(404, 'Not Found', model=error_msg)
     @api.response(500, 'Internal Server Error', model=error_msg)
     def get(self, vasi):
-        print(vasi)
-        return {}
+        # Get Vertical Application Slice Status by VASI
+        vasi = str(vasi)
+        _vas_status = None
+        try:
+            _vas_status = db_manager.get_va_status_by_id(vasi)
+        except exceptions.DBException as e:
+            abort(500, str(e))
+
+        # Build the info model for the Vertical Application Slice Status
+        # retrieving the correspondent Network Slice Status and Vertical
+        # Application Quota Status
+        _vas_info = None
+        _network_slice_status = None
+        _va_quota_status = None
+        try:
+            _network_slice_status = db_manager.get_network_slice_status_by_id(_vas_status[2])
+            _va_quota_status = db_manager.get_va_quota_status_by_vas_id(vasi)
+        except exceptions.DBException as e:
+            abort(500, str(e))
+
+        _vas_info = {
+            'vasStatus': {
+                'vasi': vasi,
+                'status': _vas_status[1]
+            },
+            'vaQuotaInfo': [quota[1] for quota in _va_quota_status],
+            'networkSliceStatus': {
+                'networkSliceId': _network_slice_status[0],
+                'status': _network_slice_status[1]
+            },
+            'vasConfiguration': _vas_status[3],
+            'nestId': _vas_status[4]
+        }
+
+        return _vas_info
 
     @api.doc('Delete a Vertical Application Slice by ID.')
     @api.response(204, 'Vertical Application Slice Instance Deleted')
