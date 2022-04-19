@@ -168,7 +168,7 @@ class VASCtrl(Resource):
             try:
                 _network_slice_status = db_manager.get_network_slice_status_by_id(status[2])
                 _va_quota_status = db_manager.get_va_quota_status_by_vas_id(vasi)
-            except exceptions.DBException as e:
+            except (exceptions.DBException, exceptions.NotExistingEntityException) as e:
                 abort(500, str(e))
 
             _vas_info.append({
@@ -317,7 +317,7 @@ class VASCtrlByID(Resource):
         try:
             _network_slice_status = db_manager.get_network_slice_status_by_id(_vas_status[2])
             _va_quota_status = db_manager.get_va_quota_status_by_vas_id(vasi)
-        except exceptions.DBException as e:
+        except (exceptions.DBException, exceptions.NotExistingEntityException) as e:
             abort(500, str(e))
 
         _vas_info = {
