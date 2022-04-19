@@ -59,6 +59,21 @@ def get_va_quota_status_by_id(vertical_application_quota_id: str):
         raise DBException('Error while fetching vertical_application_quota_status: ' + str(error))
 
 
+def get_va_quota_status_by_vas_id(vertical_application_slice_id: str):
+    # Retrieve all va_quota_status linked to the given vertical_application_slice_id
+    command = """SELECT * FROM vertical_application_quota_status WHERE vertical_application_slice_id = (%s)"""
+    try:
+        cur = db_conn.cursor()
+        cur.execute(command, (vertical_application_slice_id, ))
+        va_quota_status = cur.fetchall()
+        cur.close()
+
+        return va_quota_status
+    except (Exception, DatabaseError) as error:
+        db_log.error(str(error))
+        raise DBException('Error while fetching vertical_application_quota_status: ' + str(error))
+
+
 def insert_network_slice_status(network_slice_id: str, network_slice_status: str):
     # Create a new entry <network_slice_id, network_slice_status> in the DB for a network slice
     command = """INSERT INTO network_slice_status(network_slice_id, network_slice_status) VALUES (%s, %s)"""

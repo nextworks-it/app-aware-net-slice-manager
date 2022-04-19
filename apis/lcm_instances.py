@@ -150,7 +150,38 @@ class VASCtrl(Resource):
     @api.response(403, 'Forbidden', model=error_msg)
     @api.response(500, 'Internal Server Error', model=error_msg)
     def get(self):
-        return []
+        _vas_status = None
+        try:
+            _vas_status = db_manager.get_va_status()
+        except exceptions.DBException as e:
+            abort(500, str(e))
+
+        _vas_info = []
+        for status in _vas_status:
+            vasi = status[0]
+            _network_slice_status = None
+            _va_quota_status = None
+            try:
+                _network_slice_status = db_manager.get_network_slice_status_by_id(status[2])
+                _va_quota_status = db_manager.get_va_quota_status_by_vas_id(vasi)
+            except exceptions.DBException as e:
+                abort(500, str(e))
+
+            _vas_info.append({
+                'vasStatus': {
+                    'vasi': vasi,
+                    'status': status[1]
+                },
+                'vaQuotaInfo': [quota[1] for quota in _va_quota_status],
+                'networkSliceStatus': {
+                    'networkSliceId': _network_slice_status[0],
+                    'status': _network_slice_status[1]
+                },
+                'vasConfiguration': status[3],
+                'nestId': status[4]
+            })
+
+        return _vas_info
 
     @api.doc('Request Vertical Application Slice Instantiation.')
     @api.param('context', 'Context of K8s cluster')
