@@ -303,6 +303,8 @@ class VASCtrlByID(Resource):
         _vas_status = None
         try:
             _vas_status = db_manager.get_va_status_by_id(vasi)
+        except exceptions.NotExistingEntityException as e:
+            abort(404, str(e))
         except exceptions.DBException as e:
             abort(500, str(e))
 
