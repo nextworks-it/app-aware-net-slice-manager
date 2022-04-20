@@ -7,3 +7,8 @@ class InstantiationStatus(enum.Enum):
     FAILED = 3
     TERMINATING = 4
     TERMINATED = 5
+
+
+class SliceType(enum.Enum):
+    URLLC = 1,
+    EMBB = 2
