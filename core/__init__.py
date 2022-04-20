@@ -78,3 +78,22 @@ try:
 except (Exception, psycopg2.DatabaseError) as error:
     db_log.error(str(error))
     exit()
+
+# Load nest_catalogue section from config.ini
+nest_catalogue_url = None
+if parser.has_section('nest_catalogue'):
+    params = parser.items('nest_catalogue')
+    nest_catalogue_url = params[0][1]
+    if nest_catalogue_url is None:
+        raise Exception('NEST Catalogue URL not found in nest_catalogue section of config.ini file')
+else:
+    raise Exception('Section nest_catalogue not found in the config.ini file')
+
+# Load QI section from config.ini
+qi = {}
+if parser.has_section('qi'):
+    params = parser.items('qi')
+    for param in params:
+        qi[param[0]] = param[1]
+else:
+    raise Exception('Section qi not found in the config.ini file')
