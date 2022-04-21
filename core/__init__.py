@@ -82,8 +82,7 @@ except (Exception, psycopg2.DatabaseError) as error:
 # Load nest_catalogue section from config.ini
 nest_catalogue_url = None
 if parser.has_section('nest_catalogue'):
-    params = parser.items('nest_catalogue')
-    nest_catalogue_url = params[0][1]
+    nest_catalogue_url = parser.get('nest_catalogue', 'url')
     if nest_catalogue_url is None:
         raise Exception('NEST Catalogue URL not found in nest_catalogue section of config.ini file')
 else:
