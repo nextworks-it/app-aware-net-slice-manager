@@ -1,5 +1,6 @@
 from configparser import ConfigParser
 from pathlib import Path
+from json import loads
 import logging
 import psycopg2
 
@@ -93,6 +94,6 @@ qi = {}
 if parser.has_section('qi'):
     params = parser.items('qi')
     for param in params:
-        qi[param[0]] = param[1]
+        qi[param[0]] = loads(param[1])
 else:
     raise Exception('Section qi not found in the config.ini file')
