@@ -16,3 +16,7 @@ class DBException(Exception):
 
 class NotExistingEntityException(Exception):
     pass
+
+
+class FailedIntentTranslationException(Exception):
+    pass
