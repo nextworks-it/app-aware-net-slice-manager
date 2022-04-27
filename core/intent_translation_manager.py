@@ -73,7 +73,7 @@ def select_urllc_nest(delay: float) -> dict:
         [nest_slice_type for nest_slice_type in nest_slice_type_map if float(nest_slice_type[2]) <= delay]
 
     if len(nest_slice_type_map) == 0:
-        raise FailedIntentTranslationException('No NEST available with specified constraints.')
+        raise FailedIntentTranslationException('No URLLC NEST available with specified constraints.')
 
     return nest_slice_type_map[0][0]
 
@@ -97,7 +97,7 @@ def select_embb_nest(isolation_level: str) -> dict:
             _nest_slice_type_map.append(nest_slice_type)
 
     if len(_nest_slice_type_map) == 0:
-        raise FailedIntentTranslationException('No NEST available with specified constraints.')
+        raise FailedIntentTranslationException('No EMBB NEST available with specified constraints.')
 
     return _nest_slice_type_map[0][0]
 
