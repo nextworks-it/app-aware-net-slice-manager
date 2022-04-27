@@ -195,6 +195,24 @@ def update_va_status_with_nest_id(vertical_application_slice_id: str, nest_id: s
     execute_va_status_update(command, vertical_application_slice_id, nest_id)
 
 
+def update_va_with_status_by_network_slice(network_slice_id: str, vertical_application_slice_status: str):
+    # Update vertical application entry status by network_slice_id (FOREIGN KEY)
+    command = """
+    UPDATE vertical_application_slice_status SET vertical_application_slice_status = %s 
+    WHERE network_slice_status = %s
+    """
+    try:
+        cur = db_conn.cursor()
+        cur.execute(command, (vertical_application_slice_status, network_slice_id))
+        cur.close()
+        db_conn.commit()
+
+        db_log.info('Updated va_status with network_slice_status %s', network_slice_id)
+    except (Exception, DatabaseError) as error:
+        db_log.error(str(error))
+        raise DBException('Error while updating vertical_application_slice_status: ' + str(error))
+
+
 def get_va_status():
     # Retrieve all va_status entries from the DB
     command = """SELECT * FROM vertical_application_slice_status"""
