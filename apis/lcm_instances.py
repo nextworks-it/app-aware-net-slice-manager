@@ -3,7 +3,7 @@ from flask import request, abort
 from core import app_quota_manager
 from core import exceptions
 from core import db_manager
-from core.enums import InstantiationStatus
+from core.enums import InstantiationStatus, NsiNotificationType, NsiStatus
 from core import intent_translation_manager
 from marshmallow import Schema
 import marshmallow.fields
@@ -134,6 +134,17 @@ vas_info = api.model('vas_info', {
 error_msg = api.model('error_msg', {'message': fields.String(required=True)})
 
 
+# Network Slice Notification Model Specification
+
+notification = api.model('notification', {
+    'nsiId': fields.String(required=True),
+    'nsiNotifType': fields.String(enum=['STATUS_CHANGED', 'ERROR']),
+    'nsiStatus': fields.String(enum=['CREATED', 'INSTANTIATING', 'INSTANTIATED', 'CONFIGURING',
+                                     'TERMINATING', 'TERMINATED', 'FAILED', 'OTHER']),
+    'errors': fields.String(enum=['STATUS_TRANSITION'])
+})
+
+
 class VASPostSchema(Schema):
     context = marshmallow.fields.Str()
 
@@ -233,6 +244,7 @@ class VASCtrl(Resource):
             for k8s_config in k8s_configs:
                 db_manager.insert_va_quota_status(k8s_config, vertical_application_slice_id)
         # Abort if DB entry cannot be created
+        # TODO: Delete quota
         except exceptions.DBException as e:
             try:
                 db_manager.update_va_with_status(vertical_application_slice_id, InstantiationStatus.FAILED.name)
@@ -246,6 +258,8 @@ class VASCtrl(Resource):
         try:
             nest_id = intent_translation_manager.select_nest(vas_intent['networkingConstraints'])
             db_manager.update_va_status_with_nest_id(vertical_application_slice_id, nest_id)
+        # Abort if Intent mapping fail or DB entry cannot be created
+        # TODO: Delete quota
         except (exceptions.FailedIntentTranslationException, exceptions.DBException) as e:
             try:
                 db_manager.update_va_with_status(vertical_application_slice_id, InstantiationStatus.FAILED.name)
@@ -254,6 +268,8 @@ class VASCtrl(Resource):
                 pass
             finally:
                 abort(500, str(e))
+        # Abort if NEST cannot be selected due to condition not implemented
+        # TODO: Delete quota
         except exceptions.NotImplementedException as e:
             try:
                 db_manager.update_va_with_status(vertical_application_slice_id, InstantiationStatus.FAILED.name)
@@ -261,6 +277,8 @@ class VASCtrl(Resource):
             except exceptions.DBException as ee:
                 abort(500, str(ee))
             abort(501, str(e))
+        # Abort if Networking Constraints do not specify URLLC or EMBB NEST
+        # TODO: Delete quota
         except exceptions.MalformedIntentException as e:
             try:
                 db_manager.update_va_with_status(vertical_application_slice_id, InstantiationStatus.FAILED.name)
@@ -284,20 +302,95 @@ class VASCtrl(Resource):
             finally:
                 abort(500, str(e))
 
-        # Mocked network slice instantiated
-        try:
-            db_manager.update_network_slice_status(ns_id, InstantiationStatus.INSTANTIATED.name)
-            db_manager.update_va_with_status(vertical_application_slice_id, InstantiationStatus.INSTANTIATED.name)
-        except exceptions.DBException as e:
-            try:
-                db_manager.update_va_with_status(vertical_application_slice_id, InstantiationStatus.FAILED.name)
-            # Abort if DB entry cannot be updated
-            except exceptions.DBException:
-                pass
-            finally:
-                abort(500, str(e))
-
         return vertical_application_slice_id
+
+
+@api.route('/network_slice/status_update')
+class NetworkSliceStatusUpdateHandler(Resource):
+
+    @api.doc('Notification Handler, manage the Network Slice status update')
+    @api.expect(notification, validate=True)
+    @api.response(204, 'No Content')
+    @api.response(500, 'Internal Server Error', model=error_msg)
+    def post(self):
+        # Handle Network Slice status notification
+        _notification = request.json
+        ns_id = _notification['nsiId']
+        nsi_notification_type = NsiNotificationType[_notification['nsiNotifType']].name
+
+        # Abort if notification type is 'ERROR'
+        # TODO: Delete quota
+        if nsi_notification_type == NsiNotificationType.ERROR.name:
+            try:
+                db_manager.update_network_slice_status(ns_id, InstantiationStatus.FAILED.name)
+                db_manager.update_va_with_status_by_network_slice(ns_id, InstantiationStatus.FAILED.name)
+                return '', 204
+            # Abort if DB entries cannot be updated
+            # TODO: Delete quota
+            except exceptions.DBException as e:
+                try:
+                    db_manager.update_va_with_status_by_network_slice(ns_id, InstantiationStatus.FAILED.name)
+                # Abort if DB entry cannot be updated
+                except exceptions.DBException:
+                    pass
+                finally:
+                    abort(500, str(e))
+        elif nsi_notification_type == NsiNotificationType.STATUS_CHANGED.name:
+            nsi_status = NsiStatus[_notification['nsiStatus']].name
+            # Ignore if the status received is CREATED, CONFIGURING or OTHER
+            if nsi_status == NsiStatus.CREATED.name or nsi_status == NsiStatus.CONFIGURING.name \
+                    or nsi_status == NsiStatus.OTHER.name:
+                return '', 204
+            # Abort if the Network Slice instantiation failed
+            # TODO: Delete quota
+            elif nsi_status == NsiStatus.FAILED.name:
+                try:
+                    db_manager.update_network_slice_status(ns_id, InstantiationStatus.FAILED.name)
+                    db_manager.update_va_with_status_by_network_slice(ns_id, InstantiationStatus.FAILED.name)
+                    return '', 204
+                # Abort if DB entries cannot be updated
+                # TODO: Delete quota
+                except exceptions.DBException as e:
+                    try:
+                        db_manager.update_va_with_status_by_network_slice(ns_id, InstantiationStatus.FAILED.name)
+                    # Abort if DB entry cannot be updated
+                    except exceptions.DBException:
+                        pass
+                    finally:
+                        abort(500, str(e))
+            # Update the Network Slice status if the notification is INSTANTIATING or TERMINATING
+            elif nsi_status == NsiStatus.INSTANTIATING.name or nsi_status == NsiStatus.TERMINATING.name:
+                try:
+                    db_manager.update_network_slice_status(ns_id, InstantiationStatus[nsi_status].name)
+                    return '', 204
+                # Abort if DB entry cannot be updated
+                # TODO: Delete quota
+                except exceptions.DBException as e:
+                    try:
+                        db_manager.update_va_with_status_by_network_slice(ns_id, InstantiationStatus.FAILED.name)
+                    # Abort if DB entry cannot be updated
+                    except exceptions.DBException:
+                        pass
+                    finally:
+                        abort(500, str(e))
+            # Update the Network Slice status and the VAS status if the notification is INSTANTIATED or TERMINATED
+            elif nsi_status == NsiStatus.INSTANTIATED.name or nsi_status == NsiStatus.TERMINATED.name:
+                try:
+                    db_manager.update_network_slice_status(ns_id, InstantiationStatus[nsi_status].name)
+                    db_manager.update_va_with_status_by_network_slice(ns_id, InstantiationStatus[nsi_status].name)
+                    return '', 204
+                # Abort if DB entries cannot be updated
+                # TODO: Delete quota
+                except exceptions.DBException as e:
+                    try:
+                        db_manager.update_va_with_status_by_network_slice(ns_id, InstantiationStatus.FAILED.name)
+                    # Abort if DB entry cannot be updated
+                    except exceptions.DBException:
+                        pass
+                    finally:
+                        abort(500, str(e))
+            else:
+                abort(400, 'Unrecognized Notification Type.')
 
 
 @api.route('/<uuid:vasi>')
