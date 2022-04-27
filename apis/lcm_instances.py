@@ -4,6 +4,7 @@ from core import app_quota_manager
 from core import exceptions
 from core import db_manager
 from core.enums import InstantiationStatus
+from core import intent_translation_manager
 from marshmallow import Schema
 import marshmallow.fields
 import uuid
@@ -25,7 +26,7 @@ computing_constraint = api.model('computing_constraint', {
 profile_params = api.model('profile_params', {
     'availability': fields.Float,
     'errorRate': fields.Float,
-    'isolationLevel': fields.String(enum=['NO_ISOLATION', 'LOGICAL']),
+    'isolationLevel': fields.String(enum=['NoIsolation', 'Logical', 'Physical']),
     'maximumNumberUE': fields.Integer,
     'uESpeed': fields.Float,
     'uEDensity': fields.Float,
@@ -241,12 +242,11 @@ class VASCtrl(Resource):
             finally:
                 abort(500, str(e))
 
-        # Mocked intent - nest id mapping
-        nest_id = str(uuid.uuid4())
+        # Retrieve the most appropriate NEST for the instantiation of the 5G Network Slice
         try:
+            nest_id = intent_translation_manager.select_nest(vas_intent['networkingConstraints'])
             db_manager.update_va_status_with_nest_id(vertical_application_slice_id, nest_id)
-        # Abort if DB entry cannot be updated
-        except exceptions.DBException as e:
+        except (exceptions.FailedIntentTranslationException, exceptions.DBException) as e:
             try:
                 db_manager.update_va_with_status(vertical_application_slice_id, InstantiationStatus.FAILED.name)
             # Abort if DB entry cannot be updated
@@ -254,6 +254,20 @@ class VASCtrl(Resource):
                 pass
             finally:
                 abort(500, str(e))
+        except exceptions.NotImplementedException as e:
+            try:
+                db_manager.update_va_with_status(vertical_application_slice_id, InstantiationStatus.FAILED.name)
+            # Abort if DB entry cannot be updated
+            except exceptions.DBException as ee:
+                abort(500, str(ee))
+            abort(501, str(e))
+        except exceptions.MalformedIntentException as e:
+            try:
+                db_manager.update_va_with_status(vertical_application_slice_id, InstantiationStatus.FAILED.name)
+            # Abort if DB entry cannot be updated
+            except exceptions.DBException as ee:
+                abort(500, str(ee))
+            abort(400, str(e))
 
         # Mocked network slice instantiation request
         ns_id = str(uuid.uuid4())

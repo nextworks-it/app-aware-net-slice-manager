@@ -20,3 +20,11 @@ class NotExistingEntityException(Exception):
 
 class FailedIntentTranslationException(Exception):
     pass
+
+
+class NotImplementedException(Exception):
+    pass
+
+
+class MalformedIntentException(Exception):
+    pass

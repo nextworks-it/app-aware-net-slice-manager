@@ -10,5 +10,11 @@ class InstantiationStatus(enum.Enum):
 
 
 class SliceType(enum.Enum):
-    URLLC = 1,
+    URLLC = 1
     EMBB = 2
+
+
+class IsolationLevel(enum.Enum):
+    NoIsolation = 1
+    Logical = 2
+    Physical = 3

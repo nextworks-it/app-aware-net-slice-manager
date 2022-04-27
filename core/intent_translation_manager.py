@@ -1,6 +1,6 @@
 from core import nest_catalogue_url, qi
-from core.enums import SliceType
-from core.exceptions import FailedIntentTranslationException
+from core.enums import SliceType, IsolationLevel
+from core.exceptions import FailedIntentTranslationException, NotImplementedException, MalformedIntentException
 from typing import List, Tuple
 from sys import maxsize
 import requests
@@ -100,3 +100,37 @@ def select_embb_nest(isolation_level: str) -> dict:
         raise FailedIntentTranslationException('No NEST available with specified constraints.')
 
     return _nest_slice_type_map[0][0]
+
+
+def select_nest(networking_constraints: List[dict]) -> str:
+    urllc = 0
+    min_delay = maxsize
+    max_isolation_level = IsolationLevel.NoIsolation
+    embb = 0
+    for networking_constraint in networking_constraints:
+        slice_profiles = networking_constraint['sliceProfiles']
+        for slice_profile in slice_profiles:
+            slice_type = slice_profile['sliceType']
+            if slice_type == SliceType.URLLC.name:
+                urllc += 1
+                delay = slice_profile['profileParams']['delay']
+                if delay < min_delay:
+                    min_delay = delay
+            elif slice_type == SliceType.EMBB.name:
+                embb += 1
+                isolation_level = IsolationLevel[slice_profile['profileParams']['isolationLevel']]
+                if isolation_level.value > max_isolation_level.value:
+                    max_isolation_level = isolation_level
+            else:
+                continue
+
+    if urllc > 0 and embb > 0:
+        raise NotImplementedException('Case with urllc > 0 and embb > 0 not implemented, abort.')
+    elif urllc == 0 and embb == 0:
+        raise MalformedIntentException('Malformed intent [networkingConstraints], abort')
+    elif urllc > 0:
+        nest = select_urllc_nest(min_delay)
+    else:
+        nest = select_embb_nest(max_isolation_level.name)
+
+    return nest['gst']['gstId']
