@@ -65,24 +65,8 @@ def filter_nest_slice_type_map(nest_slice_type_map: List[Tuple[dict, SliceType, 
     return [nest_slice_type for nest_slice_type in nest_slice_type_map if nest_slice_type[1].name == slice_type.name]
 
 
-def select_urllc_nest(delay: float) -> dict:
-    nests = get_nests()
-    nest_slice_type_map = map_nests_to_slice_type(nests)
-    nest_slice_type_map = filter_nest_slice_type_map(nest_slice_type_map, SliceType.URLLC)
-    nest_slice_type_map = \
-        [nest_slice_type for nest_slice_type in nest_slice_type_map if float(nest_slice_type[2]) <= delay]
-
-    if len(nest_slice_type_map) == 0:
-        raise FailedIntentTranslationException('No URLLC NEST available with specified constraints.')
-
-    return nest_slice_type_map[0][0]
-
-
-def select_embb_nest(isolation_level: str) -> dict:
-    nests = get_nests()
-    nest_slice_type_map = map_nests_to_slice_type(nests)
-    nest_slice_type_map = filter_nest_slice_type_map(nest_slice_type_map, SliceType.EMBB)
-
+def filter_by_isolation_level(nest_slice_type_map: List[Tuple[dict, SliceType, int]],
+                              isolation_level: str) -> List[Tuple[dict, SliceType, int]]:
     _nest_slice_type_map = []
     for nest_slice_type in nest_slice_type_map:
         isolation = nest_slice_type[0]['gst']['isolation']
@@ -96,10 +80,39 @@ def select_embb_nest(isolation_level: str) -> dict:
         if isolation_level == _isolation_level:
             _nest_slice_type_map.append(nest_slice_type)
 
-    if len(_nest_slice_type_map) == 0:
+    return _nest_slice_type_map
+
+
+def select_urllc_nest(delay: float = None, isolation_level: str = None) -> dict:
+    nests = get_nests()
+    nest_slice_type_map = map_nests_to_slice_type(nests)
+    nest_slice_type_map = filter_nest_slice_type_map(nest_slice_type_map, SliceType.URLLC)
+
+    if delay is not None:
+        nest_slice_type_map = \
+            [nest_slice_type for nest_slice_type in nest_slice_type_map if float(nest_slice_type[2]) <= delay]
+
+    if isolation_level is not None:
+        nest_slice_type_map = filter_by_isolation_level(nest_slice_type_map, isolation_level)
+
+    if len(nest_slice_type_map) == 0:
+        raise FailedIntentTranslationException('No URLLC NEST available with specified constraints.')
+
+    return nest_slice_type_map[0][0]
+
+
+def select_embb_nest(isolation_level: str = None) -> dict:
+    nests = get_nests()
+    nest_slice_type_map = map_nests_to_slice_type(nests)
+    nest_slice_type_map = filter_nest_slice_type_map(nest_slice_type_map, SliceType.EMBB)
+
+    if isolation_level is not None:
+        nest_slice_type_map = filter_by_isolation_level(nest_slice_type_map, isolation_level)
+
+    if len(nest_slice_type_map) == 0:
         raise FailedIntentTranslationException('No EMBB NEST available with specified constraints.')
 
-    return _nest_slice_type_map[0][0]
+    return nest_slice_type_map[0][0]
 
 
 def select_nest(networking_constraints: List[dict]) -> str:
@@ -113,14 +126,20 @@ def select_nest(networking_constraints: List[dict]) -> str:
             slice_type = slice_profile['sliceType']
             if slice_type == SliceType.URLLC.name:
                 urllc += 1
-                delay = slice_profile['profileParams']['delay']
-                if delay < min_delay:
-                    min_delay = delay
+                if 'delay' in slice_profile['profileParams']:
+                    delay = slice_profile['profileParams']['delay']
+                    if delay < min_delay:
+                        min_delay = delay
+                if 'isolationLevel' in slice_profile['profileParams']:
+                    isolation_level = IsolationLevel[slice_profile['profileParams']['isolationLevel']]
+                    if isolation_level.value > max_isolation_level.value:
+                        max_isolation_level = isolation_level
             elif slice_type == SliceType.EMBB.name:
                 embb += 1
-                isolation_level = IsolationLevel[slice_profile['profileParams']['isolationLevel']]
-                if isolation_level.value > max_isolation_level.value:
-                    max_isolation_level = isolation_level
+                if 'isolationLevel' in slice_profile['profileParams']:
+                    isolation_level = IsolationLevel[slice_profile['profileParams']['isolationLevel']]
+                    if isolation_level.value > max_isolation_level.value:
+                        max_isolation_level = isolation_level
             else:
                 continue
 
@@ -129,7 +148,7 @@ def select_nest(networking_constraints: List[dict]) -> str:
     elif urllc == 0 and embb == 0:
         raise MalformedIntentException('Malformed intent [networkingConstraints], abort')
     elif urllc > 0:
-        nest = select_urllc_nest(min_delay)
+        nest = select_urllc_nest(min_delay, max_isolation_level.name)
     else:
         nest = select_embb_nest(max_isolation_level.name)
 
