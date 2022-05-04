@@ -6,6 +6,7 @@ from core import db_manager
 from core.enums import InstantiationStatus, NsiNotificationType, NsiStatus
 from core import intent_translation_manager
 from core import nsmf_manager
+from core import quota_log
 from marshmallow import Schema
 import marshmallow.fields
 
@@ -331,7 +332,7 @@ class NetworkSliceStatusUpdateHandler(Resource):
     def post(self):
         # Handle Network Slice status notification
         _notification = request.json
-        print(_notification)
+        quota_log.info(_notification)
         ns_id = _notification['nsiId']
         nsi_notification_type = NsiNotificationType[_notification['nsiNotifType']].name
 
