@@ -331,6 +331,7 @@ class NetworkSliceStatusUpdateHandler(Resource):
     def post(self):
         # Handle Network Slice status notification
         _notification = request.json
+        print(_notification)
         ns_id = _notification['nsiId']
         nsi_notification_type = NsiNotificationType[_notification['nsiNotifType']].name
 
