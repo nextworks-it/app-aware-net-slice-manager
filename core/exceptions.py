@@ -28,3 +28,7 @@ class NotImplementedException(Exception):
 
 class MalformedIntentException(Exception):
     pass
+
+
+class FailedNSMFRequestException(Exception):
+    pass

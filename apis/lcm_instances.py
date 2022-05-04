@@ -5,9 +5,9 @@ from core import exceptions
 from core import db_manager
 from core.enums import InstantiationStatus, NsiNotificationType, NsiStatus
 from core import intent_translation_manager
+from core import nsmf_manager
 from marshmallow import Schema
 import marshmallow.fields
-import uuid
 
 api = Namespace('lcm/instances', description='Application-Aware NSM LCM APIs')
 
@@ -255,6 +255,7 @@ class VASCtrl(Resource):
                 abort(500, str(e))
 
         # Retrieve the most appropriate NEST for the instantiation of the 5G Network Slice
+        nest_id = None
         try:
             nest_id = intent_translation_manager.select_nest(vas_intent['networkingConstraints'])
             db_manager.update_va_status_with_nest_id(vertical_application_slice_id, nest_id)
@@ -287,12 +288,27 @@ class VASCtrl(Resource):
                 abort(500, str(ee))
             abort(400, str(e))
 
-        # Mocked network slice instantiation request
-        ns_id = str(uuid.uuid4())
+        ns_id = None
+        try:
+            jsessionid = nsmf_manager.nsmf_login('admin', 'admin')
+            ns_id = nsmf_manager.nsmf_create_slice_info(nest_id, jsessionid, vertical_application_slice_id)
+            nsmf_manager.nsmf_instantiate(ns_id, jsessionid)
+        # Abort if the 5G Network Slice instantiation request failed
+        # TODO: Delete quota
+        except exceptions.FailedNSMFRequestException as e:
+            try:
+                db_manager.update_va_with_status(vertical_application_slice_id, InstantiationStatus.FAILED.name)
+            # Abort if DB entry cannot be updated
+            except exceptions.DBException:
+                pass
+            finally:
+                abort(500, str(e))
+
         try:
             db_manager.insert_network_slice_status(ns_id, InstantiationStatus.INSTANTIATING.name)
             db_manager.update_va_status_with_ns(vertical_application_slice_id, ns_id)
         # Abort if DB entries cannot be created and/or updated
+        # TODO: Delete quota
         except exceptions.DBException as e:
             try:
                 db_manager.update_va_with_status(vertical_application_slice_id, InstantiationStatus.FAILED.name)
