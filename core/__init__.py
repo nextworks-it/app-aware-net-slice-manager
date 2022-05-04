@@ -97,3 +97,12 @@ if parser.has_section('qi'):
         qi[param[0]] = loads(param[1])
 else:
     raise Exception('Section qi not found in the config.ini file')
+
+# Load nsmf section from config.ini
+nsmf_url = None
+if parser.has_section('nsmf'):
+    nsmf_url = parser.get('nsmf', 'url')
+    if nsmf_url is None:
+        raise Exception('NSMF URL not found in nsmf section of config.ini file')
+else:
+    raise Exception('Section nsmf not found in the config.ini file')
