@@ -326,7 +326,7 @@ class NetworkSliceStatusUpdateHandler(Resource):
 
     @api.doc('Notification Handler, manage the Network Slice status update')
     @api.expect(notification, validate=True)
-    @api.response(204, 'No Content')
+    @api.response(200, 'No Content')
     @api.response(500, 'Internal Server Error', model=error_msg)
     def post(self):
         # Handle Network Slice status notification
@@ -340,7 +340,7 @@ class NetworkSliceStatusUpdateHandler(Resource):
             try:
                 db_manager.update_network_slice_status(ns_id, InstantiationStatus.FAILED.name)
                 db_manager.update_va_with_status_by_network_slice(ns_id, InstantiationStatus.FAILED.name)
-                return '', 204
+                return '', 200
             # Abort if DB entries cannot be updated
             # TODO: Delete quota
             except exceptions.DBException as e:
@@ -356,14 +356,14 @@ class NetworkSliceStatusUpdateHandler(Resource):
             # Ignore if the status received is CREATED, CONFIGURING or OTHER
             if nsi_status == NsiStatus.CREATED.name or nsi_status == NsiStatus.CONFIGURING.name \
                     or nsi_status == NsiStatus.OTHER.name:
-                return '', 204
+                return '', 200
             # Abort if the Network Slice instantiation failed
             # TODO: Delete quota
             elif nsi_status == NsiStatus.FAILED.name:
                 try:
                     db_manager.update_network_slice_status(ns_id, InstantiationStatus.FAILED.name)
                     db_manager.update_va_with_status_by_network_slice(ns_id, InstantiationStatus.FAILED.name)
-                    return '', 204
+                    return '', 200
                 # Abort if DB entries cannot be updated
                 # TODO: Delete quota
                 except exceptions.DBException as e:
@@ -378,7 +378,7 @@ class NetworkSliceStatusUpdateHandler(Resource):
             elif nsi_status == NsiStatus.INSTANTIATING.name or nsi_status == NsiStatus.TERMINATING.name:
                 try:
                     db_manager.update_network_slice_status(ns_id, InstantiationStatus[nsi_status].name)
-                    return '', 204
+                    return '', 200
                 # Abort if DB entry cannot be updated
                 # TODO: Delete quota
                 except exceptions.DBException as e:
@@ -394,7 +394,7 @@ class NetworkSliceStatusUpdateHandler(Resource):
                 try:
                     db_manager.update_network_slice_status(ns_id, InstantiationStatus[nsi_status].name)
                     db_manager.update_va_with_status_by_network_slice(ns_id, InstantiationStatus[nsi_status].name)
-                    return '', 204
+                    return '', 200
                 # Abort if DB entries cannot be updated
                 # TODO: Delete quota
                 except exceptions.DBException as e:
