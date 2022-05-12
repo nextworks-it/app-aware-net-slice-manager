@@ -19,7 +19,11 @@ def get_nests() -> List[dict]:
 def map_nests_to_slice_type(nests: List[dict]) -> List[Tuple[dict, SliceType, int]]:
     nest_slice_type_map = []
     for nest in nests:
-        qos_params = nest['gst']['sliceQoSparams']
+        gst = nest.get('gst')
+        if gst is None:
+            continue
+
+        qos_params = gst.get('sliceQoSparams')
         if qos_params is None:
             continue
 
@@ -27,11 +31,11 @@ def map_nests_to_slice_type(nests: List[dict]) -> List[Tuple[dict, SliceType, in
         embb = 0
         min_delay = maxsize
         for qos_param in qos_params:
-            qosi = qos_param['qosIndicator']
+            qosi = qos_param.get('qosIndicator')
             if qosi is None:
                 continue
 
-            qii = qi[qosi]
+            qii = qi.get(qosi)
             if qii is None:
                 continue
 
@@ -69,15 +73,65 @@ def filter_by_isolation_level(nest_slice_type_map: List[Tuple[dict, SliceType, i
                               isolation_level: str) -> List[Tuple[dict, SliceType, int]]:
     _nest_slice_type_map = []
     for nest_slice_type in nest_slice_type_map:
-        isolation = nest_slice_type[0]['gst']['isolation']
+        gst = nest_slice_type[0].get('gst')
+        if gst is None:
+            continue
+
+        isolation = gst.get('isolation')
         if isolation is None:
             continue
 
-        _isolation_level = isolation['isolationLevel']
+        _isolation_level = isolation.get('isolationLevel')
         if _isolation_level is None:
             continue
 
         if isolation_level == _isolation_level:
+            _nest_slice_type_map.append(nest_slice_type)
+
+    return _nest_slice_type_map
+
+
+def filter_by_dl_throughput(nest_slice_type_map: List[Tuple[dict, SliceType, int]],
+                            dl_throughput: float) -> List[Tuple[dict, SliceType, int]]:
+    _nest_slice_type_map = []
+    for nest_slice_type in nest_slice_type_map:
+        gst = nest_slice_type[0].get('gst')
+        if gst is None:
+            continue
+
+        downlink_throughput_ns = gst.get('downlinkThroughputNS')
+        if downlink_throughput_ns is None:
+            continue
+
+        maximum_dl = downlink_throughput_ns.get('maximumDL')
+        if maximum_dl is None:
+            continue
+
+        maximum_dl = float(maximum_dl)
+        if maximum_dl >= dl_throughput:
+            _nest_slice_type_map.append(nest_slice_type)
+
+    return _nest_slice_type_map
+
+
+def filter_by_ul_throughput(nest_slice_type_map: List[Tuple[dict, SliceType, int]],
+                            ul_throughput: float) -> List[Tuple[dict, SliceType, int]]:
+    _nest_slice_type_map = []
+    for nest_slice_type in nest_slice_type_map:
+        gst = nest_slice_type[0].get('gst')
+        if gst is None:
+            continue
+
+        uplink_throughput_ns = gst.get('uplinkThroughputNS')
+        if uplink_throughput_ns is None:
+            continue
+
+        max_uplink_throughput = uplink_throughput_ns.get('maxUplinkThroughput')
+        if max_uplink_throughput is None:
+            continue
+
+        max_uplink_throughput = float(max_uplink_throughput)
+        if max_uplink_throughput >= ul_throughput:
             _nest_slice_type_map.append(nest_slice_type)
 
     return _nest_slice_type_map
@@ -101,13 +155,21 @@ def select_urllc_nest(delay: float = None, isolation_level: str = None) -> dict:
     return nest_slice_type_map[0][0]
 
 
-def select_embb_nest(isolation_level: str = None) -> dict:
+def select_embb_nest(isolation_level: str = None,
+                     dl_throughput: float = None,
+                     ul_throughput: float = None) -> dict:
     nests = get_nests()
     nest_slice_type_map = map_nests_to_slice_type(nests)
     nest_slice_type_map = filter_nest_slice_type_map(nest_slice_type_map, SliceType.EMBB)
 
     if isolation_level is not None:
         nest_slice_type_map = filter_by_isolation_level(nest_slice_type_map, isolation_level)
+
+    if dl_throughput is not None:
+        nest_slice_type_map = filter_by_dl_throughput(nest_slice_type_map, dl_throughput)
+
+    if ul_throughput is not None:
+        nest_slice_type_map = filter_by_ul_throughput(nest_slice_type_map, ul_throughput)
 
     if len(nest_slice_type_map) == 0:
         raise FailedIntentTranslationException('No EMBB NEST available with specified constraints.')
@@ -117,29 +179,53 @@ def select_embb_nest(isolation_level: str = None) -> dict:
 
 def select_nest(networking_constraints: List[dict]) -> str:
     urllc = 0
+    embb = 0
     min_delay = maxsize
     max_isolation_level = IsolationLevel.NoIsolation
-    embb = 0
+    max_dl_throughput = 0
+    max_ul_throughput = 0
+
     for networking_constraint in networking_constraints:
         slice_profiles = networking_constraint['sliceProfiles']
         for slice_profile in slice_profiles:
             slice_type = slice_profile['sliceType']
+            profile_params = slice_profile['profileParams']
             if slice_type == SliceType.URLLC.name:
                 urllc += 1
-                if 'delay' in slice_profile['profileParams']:
-                    delay = slice_profile['profileParams']['delay']
-                    if delay < min_delay:
-                        min_delay = delay
-                if 'isolationLevel' in slice_profile['profileParams']:
-                    isolation_level = IsolationLevel[slice_profile['profileParams']['isolationLevel']]
-                    if isolation_level.value > max_isolation_level.value:
-                        max_isolation_level = isolation_level
+
+                delay = profile_params.get('delay')
+                if delay is None:
+                    continue
+                if delay < min_delay:
+                    min_delay = delay
+
+                isolation_level = profile_params.get('isolationLevel')
+                if isolation_level is None:
+                    continue
+                isolation_level = IsolationLevel[isolation_level]
+                if isolation_level.value > max_isolation_level.value:
+                    max_isolation_level = isolation_level
             elif slice_type == SliceType.EMBB.name:
                 embb += 1
-                if 'isolationLevel' in slice_profile['profileParams']:
-                    isolation_level = IsolationLevel[slice_profile['profileParams']['isolationLevel']]
-                    if isolation_level.value > max_isolation_level.value:
-                        max_isolation_level = isolation_level
+
+                isolation_level = profile_params.get('isolationLevel')
+                if isolation_level is None:
+                    continue
+                isolation_level = IsolationLevel[isolation_level]
+                if isolation_level.value > max_isolation_level.value:
+                    max_isolation_level = isolation_level
+
+                dl_throughput = profile_params.get('dlThroughput')
+                if dl_throughput is None:
+                    continue
+                if dl_throughput > max_dl_throughput:
+                    max_dl_throughput = dl_throughput
+
+                ul_throughput = profile_params.get('ulThroughput')
+                if ul_throughput is None:
+                    continue
+                if ul_throughput > max_ul_throughput:
+                    max_ul_throughput = ul_throughput
             else:
                 continue
 
@@ -150,6 +236,6 @@ def select_nest(networking_constraints: List[dict]) -> str:
     elif urllc > 0:
         nest = select_urllc_nest(min_delay, max_isolation_level.name)
     else:
-        nest = select_embb_nest(max_isolation_level.name)
+        nest = select_embb_nest(max_isolation_level.name, max_dl_throughput, max_ul_throughput)
 
     return nest['gst']['gstId']

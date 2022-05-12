@@ -33,7 +33,7 @@ def nsmf_instantiate(ns_id: str, jsessionid: str):
     cookies = {'JSESSIONID': jsessionid}
     payload = {'nsiId': ns_id}
     try:
-        response = requests.put('http://' + nsmf_url + '/vs/basic/nslcm/ns/' +
-                                ns_id + '/action/instantiate', cookies=cookies, json=payload)
+        requests.put('http://' + nsmf_url + '/vs/basic/nslcm/ns/' +
+                     ns_id + '/action/instantiate', cookies=cookies, json=payload)
     except requests.exceptions.RequestException as e:
         raise FailedNSMFRequestException(str(e))
