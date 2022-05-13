@@ -1,0 +1,74 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    db: postgres
+  name: postgres
+spec:
+  ports:
+  - name: http
+    port: 5432
+    protocol: TCP
+  selector:
+    db: postgres
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: app-aware-nsm-postgres-storage
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: "/var/data"
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: app-aware-nsm-postgres-storage-claim
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres
+  labels:
+    db: postgres
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      db: postgres
+  template:
+    metadata:
+      labels:
+        db: postgres
+    spec:
+      containers:
+      - env:
+        - name: POSTGRES_PASSWORD
+          value: postgres
+        - name: POSTGRES_USER
+          value: postgres
+        - name: POSTGRES_DB
+          value: app-aware-nsm
+        image: postgres
+        imagePullPolicy: Always
+        name: postgres
+        ports:
+        - containerPort: 5432
+          protocol: TCP
+        volumeMounts:
+        - mountPath: /var/lib/app-aware-nsm/postgres/data
+          name: app-aware-nsm-postgres-storage
+      volumes:
+      - name: app-aware-nsm-postgres-storage
+        persistentVolumeClaim:
+          claimName: app-aware-nsm-postgres-storage-claim
