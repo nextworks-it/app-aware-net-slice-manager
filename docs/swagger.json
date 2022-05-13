@@ -102,6 +102,35 @@
         ]
       }
     },
+    "/lcm/instances/network_slice/status_update": {
+      "post": {
+        "responses": {
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "$ref": "#/definitions/error_msg"
+            }
+          },
+          "200": {
+            "description": "No Content"
+          }
+        },
+        "operationId": "Notification Handler, manage the Network Slice status update",
+        "parameters": [
+          {
+            "name": "payload",
+            "required": true,
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/notification"
+            }
+          }
+        ],
+        "tags": [
+          "lcm/instances"
+        ]
+      }
+    },
     "/lcm/instances/{vasi}": {
       "parameters": [
         {
@@ -495,10 +524,11 @@
         },
         "isolationLevel": {
           "type": "string",
-          "example": "NO_ISOLATION",
+          "example": "NoIsolation",
           "enum": [
-            "NO_ISOLATION",
-            "LOGICAL"
+            "NoIsolation",
+            "Logical",
+            "Physical"
           ]
         },
         "maximumNumberUE": {
@@ -567,12 +597,11 @@
           ]
         },
         "vaQuotaInfo": {
+          "type": "array",
           "description": "Vertical Application Quota Information",
-          "allOf": [
-            {
-              "$ref": "#/definitions/kubeconfig"
-            }
-          ]
+          "items": {
+            "$ref": "#/definitions/kubeconfig"
+          }
         },
         "networkSliceStatus": {
           "description": "5G Network Slice Status",
@@ -821,6 +850,46 @@
       },
       "type": "object",
       "additionalProperties": false
+    },
+    "notification": {
+      "required": [
+        "nsiId"
+      ],
+      "properties": {
+        "nsiId": {
+          "type": "string"
+        },
+        "nsiNotifType": {
+          "type": "string",
+          "example": "STATUS_CHANGED",
+          "enum": [
+            "STATUS_CHANGED",
+            "ERROR"
+          ]
+        },
+        "nsiStatus": {
+          "type": "string",
+          "example": "CREATED",
+          "enum": [
+            "CREATED",
+            "INSTANTIATING",
+            "INSTANTIATED",
+            "CONFIGURING",
+            "TERMINATING",
+            "TERMINATED",
+            "FAILED",
+            "OTHER"
+          ]
+        },
+        "errors": {
+          "type": "string",
+          "example": "STATUS_TRANSITION",
+          "enum": [
+            "STATUS_TRANSITION"
+          ]
+        }
+      },
+      "type": "object"
     },
     "scale_intent": {
       "required": [
