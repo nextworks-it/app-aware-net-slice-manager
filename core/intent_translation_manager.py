@@ -12,6 +12,11 @@ def get_nests() -> List[dict]:
         response = requests.get('http://' + nest_catalogue_url + '/ns/catalogue/nestemplate')
     except requests.exceptions.RequestException as e:
         raise FailedIntentTranslationException(str(e))
+
+    status_code = response.status_code
+    if status_code != 200:
+        raise FailedIntentTranslationException("NEST GET failed, status code: " + str(status_code))
+
     return response.json()
 
 
