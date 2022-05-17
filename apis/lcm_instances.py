@@ -14,10 +14,10 @@ api = Namespace('lcm/instances', description='Application-Aware NSM LCM APIs')
 # Intent Model Specification
 
 location_constraint = api.model('location_constraint', {
-    'geographicalAreaId': fields.String(required=True)}, strict=True)
+    'geographicalAreaId': fields.String}, strict=True)
 
 computing_constraint = api.model('computing_constraint', {
-    'applicationComponentId': fields.String(required=True),
+    'applicationComponentId': fields.String,
     'ram': fields.String(required=True),
     'cpu': fields.String(required=True),
     'storage': fields.String(required=True)
@@ -45,8 +45,8 @@ slice_profile = api.model('slice_profile', {
                                    description='Slice Profile Parameters', skip_none=True)
 }, strict=True)
 networking_constraint = api.model('networking_constraint', {
-    'applicationComponentId': fields.String(required=True),
-    'applicationComponentEndpointId': fields.String(required=True),
+    'applicationComponentId': fields.String,
+    'applicationComponentEndpointId': fields.String,
     'sliceProfiles': fields.Nested(slice_profile, required=True, as_list=True,
                                    description='List of Slice Profiles', skip_none=True)
 }, strict=True)
