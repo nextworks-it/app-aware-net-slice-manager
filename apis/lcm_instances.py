@@ -290,7 +290,8 @@ class VASCtrl(Resource):
 
         ns_id = None
         try:
-            jsessionid = nsmf_manager.nsmf_login('admin', 'admin')
+            # jsessionid = nsmf_manager.nsmf_login('admin', 'admin')
+            jsessionid = '1A530637289A03B07199A44E8D531427'
             ns_id = nsmf_manager.nsmf_create_slice_info(nest_id, jsessionid, vertical_application_slice_id)
             nsmf_manager.nsmf_instantiate(ns_id, jsessionid)
         # Abort if the 5G Network Slice instantiation request failed
