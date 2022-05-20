@@ -178,7 +178,11 @@ class VASCtrl(Resource):
             _network_slice_status = None
             _va_quota_status = None
             try:
-                _network_slice_status = db_manager.get_network_slice_status_by_id(status[2])
+                ns_id = status[2]
+                if ns_id is not None:
+                    _network_slice_status = db_manager.get_network_slice_status_by_id(ns_id)
+                else:
+                    _network_slice_status = (None, None)
                 _va_quota_status = db_manager.get_va_quota_status_by_vas_id(vasi)
             except (exceptions.DBException, exceptions.NotExistingEntityException) as e:
                 abort(500, str(e))
@@ -444,7 +448,11 @@ class VASCtrlByID(Resource):
         _network_slice_status = None
         _va_quota_status = None
         try:
-            _network_slice_status = db_manager.get_network_slice_status_by_id(_vas_status[2])
+            ns_id = _vas_status[2]
+            if ns_id is not None:
+                _network_slice_status = db_manager.get_network_slice_status_by_id(ns_id)
+            else:
+                _network_slice_status = (None, None)
             _va_quota_status = db_manager.get_va_quota_status_by_vas_id(vasi)
         except (exceptions.DBException, exceptions.NotExistingEntityException) as e:
             abort(500, str(e))
