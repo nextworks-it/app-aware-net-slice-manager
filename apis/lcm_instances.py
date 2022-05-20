@@ -138,9 +138,9 @@ error_msg = api.model('error_msg', {'message': fields.String(required=True)})
 
 notification = api.model('notification', {
     'nsiId': fields.String(required=True),
-    'nsiNotifType': fields.String(enum=['STATUS_CHANGED', 'ERROR']),
+    'nsiNotifType': fields.String(enum=['STATUS_CHANGED', 'ERROR'], required=True),
     'nsiStatus': fields.String(enum=['CREATED', 'INSTANTIATING', 'INSTANTIATED', 'CONFIGURING',
-                                     'TERMINATING', 'TERMINATED', 'FAILED', 'OTHER']),
+                                     'TERMINATING', 'TERMINATED', 'FAILED', 'OTHER'], required=True),
     'errors': fields.String(enum=['STATUS_TRANSITION'])
 })
 
@@ -330,7 +330,7 @@ class VASCtrl(Resource):
 class NetworkSliceStatusUpdateHandler(Resource):
 
     @api.doc('Notification Handler, manage the Network Slice status update')
-    @api.expect(notification)
+    @api.expect(notification, validate=True)
     @api.response(200, 'No Content')
     @api.response(500, 'Internal Server Error', model=error_msg)
     def post(self):
