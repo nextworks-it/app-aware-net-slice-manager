@@ -330,7 +330,7 @@ class VASCtrl(Resource):
 class NetworkSliceStatusUpdateHandler(Resource):
 
     @api.doc('Notification Handler, manage the Network Slice status update')
-    @api.expect(notification, validate=True)
+    #@api.expect(notification, validate=True)
     @api.response(200, 'No Content')
     @api.response(500, 'Internal Server Error', model=error_msg)
     def post(self):
