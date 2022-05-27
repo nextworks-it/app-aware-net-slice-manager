@@ -26,7 +26,7 @@ computing_constraint = api.model('computing_constraint', {
 profile_params = api.model('profile_params', {
     'availability': fields.Float,
     'errorRate': fields.Float,
-    'isolationLevel': fields.String(enum=['NoIsolation', 'Logical', 'Physical']),
+    'isolationLevel': fields.String(enum=['NO_ISOLATION', 'LOGICAL', 'PHYSICAL']),
     'maximumNumberUE': fields.Integer,
     'uESpeed': fields.Float,
     'uEDensity': fields.Float,

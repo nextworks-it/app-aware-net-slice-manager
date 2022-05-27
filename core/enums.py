@@ -15,9 +15,15 @@ class SliceType(enum.Enum):
 
 
 class IsolationLevel(enum.Enum):
-    NoIsolation = 1
-    Logical = 2
-    Physical = 3
+    NO_ISOLATION = 1
+    LOGICAL = 2
+    PHYSICAL = 3
+
+
+class IsolationLevelMapping(enum.Enum):
+    NO_ISOLATION = 'NoIsolation'
+    LOGICAL = 'Logical'
+    PHYSICAL = 'Physical'
 
 
 class NsiNotificationType(enum.Enum):

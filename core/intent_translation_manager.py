@@ -1,5 +1,5 @@
 from core import nest_catalogue_url, qi
-from core.enums import SliceType, IsolationLevel
+from core.enums import SliceType, IsolationLevel, IsolationLevelMapping
 from core.exceptions import FailedIntentTranslationException, NotImplementedException, MalformedIntentException
 from typing import List, Tuple
 from sys import maxsize
@@ -183,7 +183,7 @@ def select_nest(networking_constraints: List[dict]) -> str:
     urllc = 0
     embb = 0
     min_delay = maxsize
-    max_isolation_level = IsolationLevel.NoIsolation
+    max_isolation_level = IsolationLevel.NO_ISOLATION
     max_dl_throughput = 0
     max_ul_throughput = 0
 
@@ -231,8 +231,9 @@ def select_nest(networking_constraints: List[dict]) -> str:
     elif urllc == 0 and embb == 0:
         raise MalformedIntentException('Malformed intent [networkingConstraints], abort')
     elif urllc > 0:
-        nest = select_urllc_nest(min_delay, max_isolation_level.name)
+        nest = select_urllc_nest(min_delay, IsolationLevelMapping[max_isolation_level.name].value)
     else:
-        nest = select_embb_nest(max_isolation_level.name, max_dl_throughput, max_ul_throughput)
+        nest = select_embb_nest(IsolationLevelMapping[max_isolation_level.name].value,
+                                max_dl_throughput, max_ul_throughput)
 
     return nest['gst']['gstId']
