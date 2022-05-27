@@ -14,7 +14,12 @@ api = Namespace('lcm/instances', description='Application-Aware NSM LCM APIs')
 # Intent Model Specification
 
 location_constraint = api.model('location_constraint', {
-    'geographicalAreaId': fields.String}, strict=True)
+    'geographicalAreaId': fields.String,
+    'name': fields.String,
+    'latitude': fields.Float,
+    'longitude': fields.Float,
+    'coverageRadio': fields.Float
+}, strict=True)
 
 computing_constraint = api.model('computing_constraint', {
     'applicationComponentId': fields.String,
@@ -52,6 +57,7 @@ networking_constraint = api.model('networking_constraint', {
 }, strict=True)
 
 intent = api.model('intent', {
+    'callbackUrl': fields.String,
     'locationConstraints': fields.Nested(location_constraint, required=True, as_list=True,
                                          description='List of Geographical Area Identifiers', skip_none=True),
     'computingConstraints': fields.Nested(computing_constraint, required=True, as_list=True,
