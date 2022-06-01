@@ -14,6 +14,8 @@ logging.basicConfig(
 # Create loggers
 quota_log = logging.getLogger('app-quota-manager')
 db_log = logging.getLogger('db-manager')
+nsmf_log = logging.getLogger('nsmf-manager')
+vao_log = logging.getLogger('vao-manager')
 
 # Load the config.ini file
 parser = ConfigParser()
