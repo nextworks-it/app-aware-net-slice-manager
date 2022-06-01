@@ -244,3 +244,21 @@ def get_va_status_by_id(vertical_application_slice_id: str):
     except DatabaseError as error:
         db_log.error(str(error))
         raise DBException('Error while fetching vertical_application_slice_status: ' + str(error))
+
+
+def get_va_status_by_network_slice(network_slice_id: str):
+    # Retrieve va_status entry by network slice id
+    command = """SELECT * FROM vertical_application_slice_status WHERE network_slice_status = %s"""
+    try:
+        cur = db_conn.cursor()
+        cur.execute(command, (network_slice_id,))
+        va_status = cur.fetchone()
+        cur.close()
+
+        if va_status is None:
+            raise NotExistingEntityException('va_status with network slice ID ' + network_slice_id + ' not found.')
+
+        return va_status
+    except DatabaseError as error:
+        db_log.error(str(error))
+        raise DBException('Error while fetching vertical_application_slice_status: ' + str(error))
