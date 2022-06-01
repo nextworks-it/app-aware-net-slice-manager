@@ -1,5 +1,6 @@
 from core import db_manager
 from core.exceptions import NotExistingEntityException, DBException, FailedVAONotificationException
+from core import vao_log
 import requests
 
 
@@ -9,7 +10,9 @@ def notify(ns_id: str):
     try:
         _vas_status = db_manager.get_va_status_by_network_slice(ns_id)
     except (NotExistingEntityException, DBException) as e:
-        raise FailedVAONotificationException(str(e))
+        msg = str(e)
+        vao_log.info(msg)
+        raise FailedVAONotificationException(msg)
     vasi = _vas_status[0]
     notification_uri = _vas_status[3]['callbackUrl']
 
@@ -23,7 +26,9 @@ def notify(ns_id: str):
         _network_slice_status = db_manager.get_network_slice_status_by_id(ns_id)
         _va_quota_status = db_manager.get_va_quota_status_by_vas_id(vasi)
     except (DBException, NotExistingEntityException) as e:
-        raise FailedVAONotificationException(str(e))
+        msg = str(e)
+        vao_log.info(msg)
+        raise FailedVAONotificationException(msg)
 
     _vas_info = {
         'vasStatus': {
@@ -42,4 +47,6 @@ def notify(ns_id: str):
     try:
         requests.post(notification_uri, json=_vas_info)
     except requests.exceptions.RequestException as e:
-        raise FailedVAONotificationException(str(e))
+        msg = str(e)
+        vao_log.info(msg)
+        raise FailedVAONotificationException(msg)
