@@ -6,6 +6,7 @@ from core import db_manager
 from core.enums import InstantiationStatus, NsiNotificationType, NsiStatus
 from core import intent_translation_manager
 from core import nsmf_manager
+from core import vao_manager
 from marshmallow import Schema
 import marshmallow.fields
 
@@ -356,6 +357,7 @@ class NetworkSliceStatusUpdateHandler(Resource):
             try:
                 db_manager.update_network_slice_status(ns_id, InstantiationStatus.FAILED.name)
                 db_manager.update_va_with_status_by_network_slice(ns_id, InstantiationStatus.FAILED.name)
+                vao_manager.notify(ns_id)
                 return '', 200
             # Abort if DB entries cannot be updated
             # TODO: Delete quota
@@ -379,6 +381,7 @@ class NetworkSliceStatusUpdateHandler(Resource):
                 try:
                     db_manager.update_network_slice_status(ns_id, InstantiationStatus.FAILED.name)
                     db_manager.update_va_with_status_by_network_slice(ns_id, InstantiationStatus.FAILED.name)
+                    vao_manager.notify(ns_id)
                     return '', 200
                 # Abort if DB entries cannot be updated
                 # TODO: Delete quota
@@ -410,6 +413,7 @@ class NetworkSliceStatusUpdateHandler(Resource):
                 try:
                     db_manager.update_network_slice_status(ns_id, InstantiationStatus[nsi_status].name)
                     db_manager.update_va_with_status_by_network_slice(ns_id, InstantiationStatus[nsi_status].name)
+                    vao_manager.notify(ns_id)
                     return '', 200
                 # Abort if DB entries cannot be updated
                 # TODO: Delete quota
