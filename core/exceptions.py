@@ -32,3 +32,7 @@ class MalformedIntentException(Exception):
 
 class FailedNSMFRequestException(Exception):
     pass
+
+
+class FailedVAONotificationException(Exception):
+    pass
