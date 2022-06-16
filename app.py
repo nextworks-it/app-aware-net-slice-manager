@@ -10,6 +10,7 @@ logging.basicConfig(
 )
 
 app = Flask(__name__)
+app.url_map.strict_slashes = False
 api.init_app(app)
 
 if __name__ == '__main__':
