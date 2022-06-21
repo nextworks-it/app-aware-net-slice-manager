@@ -24,6 +24,7 @@ location_constraint = api.model('location_constraint', {
 
 computing_constraint = api.model('computing_constraint', {
     'applicationComponentId': fields.String,
+    'group': fields.String(enum=['EDGE', 'CORE', 'CLOUD']),
     'ram': fields.String(required=True),
     'cpu': fields.String(required=True),
     'storage': fields.String(required=True)

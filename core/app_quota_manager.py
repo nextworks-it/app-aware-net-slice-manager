@@ -4,6 +4,7 @@ from kubernetes.client.rest import ApiException
 from core import quota_log
 from core import exceptions
 from base64 import b64decode
+from core.enums import Group
 import uuid
 import re
 
@@ -173,19 +174,58 @@ def allocate_quota(computing_constraint, context: str):
     }
 
 
+def aggregate_quotas(cs_a: dict, cs_b: dict) -> dict:
+    if cs_a is None:
+        return cs_b
+
+    cpu_a = pattern.search(cs_a['cpu'])
+    ram_a = pattern.search(cs_a['ram'])
+    sto_a = pattern.search(cs_a['storage'])
+
+    return {
+        'cpu': str(int(cpu_a.group(1)) + int(pattern.search(cs_b['cpu']).group(1))) + cpu_a.group(2),
+        'ram': str(int(ram_a.group(1)) + int(pattern.search(cs_b['ram']).group(1))) + ram_a.group(2),
+        'storage': str(int(sto_a.group(1)) + int(pattern.search(cs_b['storage']).group(1))) + sto_a.group(2)
+    }
+
+
 def allocate_quotas(computing_constraints, context: str):
     # Allocate quota for each computing constraint in the request
     k8s_configs = []
+    default_computing_constraint = None
+    edge_computing_constraint = None
+    core_computing_constraint = None
+    cloud_computing_constraint = None
     for computing_constraint in computing_constraints:
-        try:
-            # Requirements must match the regex e.g. 4Gi
-            if not pattern.match(computing_constraint['cpu']) or \
-                    not pattern.match(computing_constraint['ram'] or
-                                      not pattern.match(computing_constraint['storage'])):
-                raise exceptions.QuantitiesMalformedException('Quantities must match the regular expression '
-                                                              '^([+-]?[0-9.]+)([eEinumkKMGTP]*[-+]?[0-9]*)$')
-            k8s_configs.append(allocate_quota(computing_constraint, context))
-        except exceptions.MissingContextException as e:
-            raise e
+        # Requirements must match the regex e.g. 4Gi
+        if not pattern.match(computing_constraint.get('cpu')) or \
+                not pattern.match(computing_constraint.get('ram') or
+                                  not pattern.match(computing_constraint.get('storage'))):
+            raise exceptions.QuantitiesMalformedException('Quantities must match the regular expression '
+                                                          '^([+-]?[0-9.]+)([eEinumkKMGTP]*[-+]?[0-9]*)$')
+
+        group = computing_constraint.get('group')
+        if group is None:
+            default_computing_constraint = aggregate_quotas(default_computing_constraint, computing_constraint)
+        elif group == Group.EDGE.name:
+            edge_computing_constraint = aggregate_quotas(edge_computing_constraint, computing_constraint)
+        elif group == Group.CORE.name:
+            core_computing_constraint = aggregate_quotas(core_computing_constraint, computing_constraint)
+        elif group == Group.CLOUD.name:
+            cloud_computing_constraint = aggregate_quotas(cloud_computing_constraint, computing_constraint)
+        else:
+            continue
+
+    try:
+        if default_computing_constraint is not None:
+            k8s_configs.append(allocate_quota(default_computing_constraint, context))
+        if edge_computing_constraint is not None:
+            k8s_configs.append(allocate_quota(edge_computing_constraint, context))
+        if core_computing_constraint is not None:
+            k8s_configs.append(allocate_quota(core_computing_constraint, context))
+        if cloud_computing_constraint is not None:
+            k8s_configs.append(allocate_quota(cloud_computing_constraint, context))
+    except exceptions.MissingContextException as e:
+        raise e
 
     return k8s_configs

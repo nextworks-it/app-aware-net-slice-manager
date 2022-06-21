@@ -40,3 +40,9 @@ class NsiStatus(enum.Enum):
     TERMINATED = 6
     FAILED = 7
     OTHER = 8
+
+
+class Group(enum.Enum):
+    EDGE = 1
+    CORE = 2
+    CLOUD = 3
