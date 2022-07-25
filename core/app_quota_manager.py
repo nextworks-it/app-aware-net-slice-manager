@@ -23,8 +23,8 @@ def create_constrained_ns(core_api: client.CoreV1Api, host: str, computing_const
     rq = client.V1ResourceQuota(
         metadata=client.V1ObjectMeta(name=ns_name + '-quota'),
         spec=client.V1ResourceQuotaSpec(hard={
-            # 'requests.cpu': requests_cpu,
-            # 'requests.memory': requests_memory,
+            'requests.cpu': computing_constraint['cpu'],
+            'requests.memory': computing_constraint['ram'],
             'limits.cpu': computing_constraint['cpu'],
             'limits.memory': computing_constraint['ram'],
             'requests.storage': computing_constraint['storage']
