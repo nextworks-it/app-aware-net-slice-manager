@@ -141,41 +141,6 @@
           "type": "string"
         }
       ],
-      "delete": {
-        "responses": {
-          "500": {
-            "description": "Internal Server Error",
-            "schema": {
-              "$ref": "#/definitions/error_msg"
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "schema": {
-              "$ref": "#/definitions/error_msg"
-            }
-          },
-          "403": {
-            "description": "Forbidden",
-            "schema": {
-              "$ref": "#/definitions/error_msg"
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "schema": {
-              "$ref": "#/definitions/error_msg"
-            }
-          },
-          "204": {
-            "description": "Vertical Application Slice Instance Deleted"
-          }
-        },
-        "operationId": "Delete a Vertical Application Slice by ID.",
-        "tags": [
-          "lcm/instances"
-        ]
-      },
       "get": {
         "responses": {
           "500": {
@@ -219,6 +184,41 @@
             "description": "An optional fields mask"
           }
         ],
+        "tags": [
+          "lcm/instances"
+        ]
+      },
+      "delete": {
+        "responses": {
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "$ref": "#/definitions/error_msg"
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "schema": {
+              "$ref": "#/definitions/error_msg"
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "schema": {
+              "$ref": "#/definitions/error_msg"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/error_msg"
+            }
+          },
+          "204": {
+            "description": "Vertical Application Slice Instance Deleted"
+          }
+        },
+        "operationId": "Delete a Vertical Application Slice by ID.",
         "tags": [
           "lcm/instances"
         ]
@@ -460,6 +460,15 @@
       "properties": {
         "applicationComponentId": {
           "type": "string"
+        },
+        "group": {
+          "type": "string",
+          "example": "EDGE",
+          "enum": [
+            "EDGE",
+            "CORE",
+            "CLOUD"
+          ]
         },
         "ram": {
           "type": "string"
