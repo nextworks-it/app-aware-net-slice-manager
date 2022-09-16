@@ -27,6 +27,6 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           context: .
-          file: deployment/Dockerfile
+          file: deployment/Dockerfile-action
           push: true
           tags: ghcr.io/nextworks-it/app-aware-net-slice-manager/app-aware-nsm:latest

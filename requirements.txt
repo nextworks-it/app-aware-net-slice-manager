@@ -1,5 +1,6 @@
-Flask
-flask-restx
+Werkzeug <= 2.1.2
+Flask == 2.1.2
+flask-restx >= 0.5.1
 kubernetes
 marshmallow
 psycopg2-binary
