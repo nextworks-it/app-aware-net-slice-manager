@@ -39,11 +39,8 @@ services:
 
   app-aware-nsm:
     container_name: app-aware-nsm
-    image: app-aware-nsm-action
+    image: ghcr.io/nextworks-it/app-aware-net-slice-manager/app-aware-nsm:latest
     restart: always
-    build:
-      context: ../
-      dockerfile: deployment/Dockerfile-action
     volumes:
       - ${KUBECONFIG}:/root/.kube/config
       - ${CONFIGINI}:/app-aware-nsm/config.ini
