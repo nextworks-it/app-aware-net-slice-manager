@@ -213,7 +213,6 @@ class VASCtrl(Resource):
         return _vas_info
 
     @api.doc('Request Vertical Application Slice Instantiation.')
-    @api.param('context', 'Context of K8s cluster')
     @api.expect(intent, validate=True)
     @api.response(200, 'Vertical Application Slice Identifier', model=fields.String)
     @api.response(400, 'Bad Request', model=error_msg)
@@ -240,8 +239,7 @@ class VASCtrl(Resource):
         # Allocate K8s quota for each compute constraint
         k8s_configs = None
         try:
-            k8s_configs = app_quota_manager.allocate_quotas(vas_intent['computingConstraints'],
-                                                            request.args.get('context'))
+            k8s_configs = app_quota_manager.allocate_quotas(vas_intent['computingConstraints'])
         # Abort if quota cannot be allocated
         except (exceptions.MissingContextException, exceptions.QuantitiesMalformedException) as e:
             try:

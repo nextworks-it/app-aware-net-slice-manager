@@ -3,6 +3,7 @@ from kubernetes.config.kube_config import ConfigException
 from kubernetes.client.rest import ApiException
 from core import quota_log
 from core import exceptions
+from core import clusters_map
 from base64 import b64decode
 from core.enums import Group
 import uuid
@@ -189,7 +190,7 @@ def aggregate_quotas(cs_a: dict, cs_b: dict) -> dict:
     }
 
 
-def allocate_quotas(computing_constraints, context: str):
+def allocate_quotas(computing_constraints):
     # Allocate quota for each computing constraint in the request
     k8s_configs = []
     default_computing_constraint = None
@@ -218,13 +219,13 @@ def allocate_quotas(computing_constraints, context: str):
 
     try:
         if default_computing_constraint is not None:
-            k8s_configs.append(allocate_quota(default_computing_constraint, context))
+            k8s_configs.append(allocate_quota(default_computing_constraint, clusters_map['default']))
         if edge_computing_constraint is not None:
-            k8s_configs.append(allocate_quota(edge_computing_constraint, context))
+            k8s_configs.append(allocate_quota(edge_computing_constraint, clusters_map['edge']))
         if core_computing_constraint is not None:
-            k8s_configs.append(allocate_quota(core_computing_constraint, context))
+            k8s_configs.append(allocate_quota(core_computing_constraint, clusters_map['core']))
         if cloud_computing_constraint is not None:
-            k8s_configs.append(allocate_quota(cloud_computing_constraint, context))
+            k8s_configs.append(allocate_quota(cloud_computing_constraint, clusters_map['cloud']))
     except exceptions.MissingContextException as e:
         raise e
 
