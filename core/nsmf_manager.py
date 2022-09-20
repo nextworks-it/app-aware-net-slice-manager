@@ -70,8 +70,8 @@ def nsmf_terminate(ns_id: str, jsessionid: str):
     cookies = {'JSESSIONID': jsessionid}
     payload = {'nsiId': ns_id}
     try:
-        response = requests.post('http://' + nsmf_url + '/vs/basic/nslcm/ns/' +
-                                 ns_id + '/action/terminate', cookies=cookies, json=payload)
+        response = requests.put('http://' + nsmf_url + '/vs/basic/nslcm/ns/' +
+                                ns_id + '/action/terminate', cookies=cookies, json=payload)
     except requests.exceptions.RequestException as e:
         msg = str(e)
         nsmf_log.info(msg)
