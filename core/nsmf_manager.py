@@ -78,7 +78,7 @@ def nsmf_terminate(ns_id: str, jsessionid: str):
         raise FailedNSMFRequestException(msg)
 
     status_code = response.status_code
-    if status_code != 201:
+    if status_code != 202:
         msg = ns_id + ' Termination request failed, status code: ' + str(status_code)
         nsmf_log.info(msg)
         raise FailedNSMFRequestException(msg)
