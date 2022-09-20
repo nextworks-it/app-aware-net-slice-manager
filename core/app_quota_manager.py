@@ -144,7 +144,6 @@ def allocate_quota(computing_constraint, context: str):
 
     # Build and return the kubeconfig that should be used to manage the resources in the new quota
     cluster_name = str(uuid.uuid4())
-    context_name = str(uuid.uuid4())
     return {
         'apiVersion': 'v1',
         'clusters': [{
@@ -160,9 +159,9 @@ def allocate_quota(computing_constraint, context: str):
                 'namespace': ns_name,
                 'user': sa_name
             },
-            'name': context_name
+            'name': context
         }],
-        'current-context': context_name,
+        'current-context': context,
         'kind': 'Config',
         'preferences': {},
         'users': [{
@@ -230,3 +229,22 @@ def allocate_quotas(computing_constraints):
         raise e
 
     return k8s_configs
+
+
+def delete_quota(kubeconfig):
+    config.load_kube_config(context=kubeconfig['current-context'])
+    with client.ApiClient() as api_client:
+        core_api = client.CoreV1Api(api_client)
+
+    try:
+        core_api.delete_namespace(name=kubeconfig['contexts'][0]['context']['namespace'])
+    except ApiException as e:
+        raise e
+
+
+def delete_quotas(quotas):
+    try:
+        for quota in quotas:
+            delete_quota(quota[1])
+    except ApiException as e:
+        raise e

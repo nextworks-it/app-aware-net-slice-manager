@@ -64,3 +64,21 @@ def nsmf_instantiate(ns_id: str, jsessionid: str):
         msg = ns_id + ' Instantiation failed, status code: ' + str(status_code)
         nsmf_log.info(msg)
         raise FailedNSMFRequestException(msg)
+
+
+def nsmf_terminate(ns_id: str, jsessionid: str):
+    cookies = {'JSESSIONID': jsessionid}
+    payload = {'nsiId': ns_id}
+    try:
+        response = requests.post('http://' + nsmf_url + '/vs/basic/nslcm/ns/' +
+                                 ns_id + '/action/terminate', cookies=cookies, json=payload)
+    except requests.exceptions.RequestException as e:
+        msg = str(e)
+        nsmf_log.info(msg)
+        raise FailedNSMFRequestException(msg)
+
+    status_code = response.status_code
+    if status_code != 201:
+        msg = ns_id + ' Termination request failed, status code: ' + str(status_code)
+        nsmf_log.info(msg)
+        raise FailedNSMFRequestException(msg)

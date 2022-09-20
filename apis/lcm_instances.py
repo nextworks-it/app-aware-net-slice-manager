@@ -400,7 +400,7 @@ class NetworkSliceStatusUpdateHandler(Resource):
                     finally:
                         abort(500, str(e))
             # Update the Network Slice status if the notification is INSTANTIATING or TERMINATING
-            elif nsi_status == NsiStatus.INSTANTIATING.name or nsi_status == NsiStatus.TERMINATING.name:
+            elif nsi_status == NsiStatus.INSTANTIATING.name:
                 try:
                     db_manager.update_network_slice_status(ns_id, InstantiationStatus[nsi_status].name)
                     return '', 200
@@ -415,7 +415,7 @@ class NetworkSliceStatusUpdateHandler(Resource):
                     finally:
                         abort(500, str(e))
             # Update the Network Slice status and the VAS status if the notification is INSTANTIATED or TERMINATED
-            elif nsi_status == NsiStatus.INSTANTIATED.name or nsi_status == NsiStatus.TERMINATED.name:
+            elif nsi_status == NsiStatus.INSTANTIATED.name:
                 try:
                     db_manager.update_network_slice_status(ns_id, InstantiationStatus[nsi_status].name)
                     db_manager.update_va_with_status_by_network_slice(ns_id, InstantiationStatus[nsi_status].name)
@@ -434,6 +434,19 @@ class NetworkSliceStatusUpdateHandler(Resource):
                         pass
                     finally:
                         abort(500, str(e))
+            elif nsi_status == NsiStatus.TERMINATING.name:
+                try:
+                    db_manager.update_network_slice_status(ns_id, InstantiationStatus[nsi_status].name)
+                    return '', 200
+                except exceptions.DBException as e:
+                    abort(500, str(e))
+            elif nsi_status == NsiStatus.TERMINATED.name:
+                try:
+                    db_manager.update_network_slice_status(ns_id, InstantiationStatus[nsi_status].name)
+                    db_manager.update_va_with_status_by_network_slice(ns_id, InstantiationStatus[nsi_status].name)
+                    return '', 200
+                except exceptions.DBException as e:
+                    abort(500, str(e))
             else:
                 abort(400, 'Unrecognized Notification Type.')
 
@@ -528,7 +541,40 @@ class VASTerminationCtrl(Resource):
     @api.response(401, 'Unauthorized', model=error_msg)
     @api.response(403, 'Forbidden', model=error_msg)
     @api.response(404, 'Not Found', model=error_msg)
+    @api.response(405, 'Method Not Allowed', model=error_msg)
     @api.response(500, 'Internal Server Error', model=error_msg)
     def post(self, vasi):
-        print(vasi)
+        # Get Vertical Application Slice Status by VASI
+        vasi = str(vasi)
+        _vas_status = None
+        try:
+            _vas_status = db_manager.get_va_status_by_id(vasi)
+        except exceptions.NotExistingEntityException as e:
+            abort(404, str(e))
+        except exceptions.DBException as e:
+            abort(500, str(e))
+
+        if _vas_status[1] != InstantiationStatus.INSTANTIATED.name:
+            abort(405, 'Vertical Application Slice ' + vasi +
+                  ' cannot be terminated. Current Status: ' + _vas_status[1])
+
+        try:
+            db_manager.update_va_with_status(vasi, InstantiationStatus.TERMINATING.name)
+        except exceptions.DBException as e:
+            abort(500, str(e))
+
+        _va_quota_status = None
+        try:
+            _va_quota_status = db_manager.get_va_quota_status_by_vas_id(vasi)
+        except exceptions.DBException as e:
+            abort(500, str(e))
+
+        app_quota_manager.delete_quotas(_va_quota_status)
+
+        ns_id = _vas_status[2]
+        try:
+            nsmf_manager.nsmf_terminate(ns_id, '1A530637289A03B07199A44E8D531427')
+        except exceptions.FailedNSMFRequestException as e:
+            abort(500, str(e))
+
         return '', 204
