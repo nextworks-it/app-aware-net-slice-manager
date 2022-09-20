@@ -97,14 +97,9 @@ def create_constrained_sa(core_api: client.CoreV1Api, host: str,
 
 def allocate_quota(computing_constraint, context: str):
     try:
-        contexts, _ = config.list_kube_config_contexts()
-        if len(contexts) == 1:
-            # Load the kubeconfig at .kube/config
-            config.load_kube_config()
-        else:
-            # Load the kubeconfig at .kube/config and change context to create
-            # the resources for the quota in the specified K8s cluster
-            config.load_kube_config(context=context)
+        # Load the kubeconfig at .kube/config and change context to create
+        # the resources for the quota in the specified K8s cluster
+        config.load_kube_config(context=context)
     except ConfigException:
         # If .kube/config context is missing
         quota_log.error('Missing context ' + context + ' in .kube/config, abort.')
