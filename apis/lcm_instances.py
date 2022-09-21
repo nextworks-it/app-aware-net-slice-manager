@@ -255,7 +255,6 @@ class VASCtrl(Resource):
             for k8s_config in k8s_configs:
                 db_manager.insert_va_quota_status(k8s_config, vertical_application_slice_id)
         # Abort if DB entry cannot be created
-        # TODO: Delete quota
         except exceptions.DBException as e:
             try:
                 db_manager.update_va_with_status(vertical_application_slice_id, InstantiationStatus.FAILED.name)
@@ -271,7 +270,6 @@ class VASCtrl(Resource):
             nest_id = intent_translation_manager.select_nest(vas_intent['networkingConstraints'])
             db_manager.update_va_status_with_nest_id(vertical_application_slice_id, nest_id)
         # Abort if Intent mapping fail or DB entry cannot be created
-        # TODO: Delete quota
         except (exceptions.FailedIntentTranslationException, exceptions.DBException) as e:
             try:
                 db_manager.update_va_with_status(vertical_application_slice_id, InstantiationStatus.FAILED.name)
@@ -281,7 +279,6 @@ class VASCtrl(Resource):
             finally:
                 abort(500, str(e))
         # Abort if NEST cannot be selected due to condition not implemented
-        # TODO: Delete quota
         except exceptions.NotImplementedException as e:
             try:
                 db_manager.update_va_with_status(vertical_application_slice_id, InstantiationStatus.FAILED.name)
@@ -290,7 +287,6 @@ class VASCtrl(Resource):
                 abort(500, str(ee))
             abort(501, str(e))
         # Abort if Networking Constraints do not specify URLLC or EMBB NEST
-        # TODO: Delete quota
         except exceptions.MalformedIntentException as e:
             try:
                 db_manager.update_va_with_status(vertical_application_slice_id, InstantiationStatus.FAILED.name)
@@ -306,7 +302,6 @@ class VASCtrl(Resource):
             ns_id = nsmf_manager.nsmf_create_slice_info(nest_id, jsessionid, vertical_application_slice_id)
             nsmf_manager.nsmf_instantiate(ns_id, jsessionid)
         # Abort if the 5G Network Slice instantiation request failed
-        # TODO: Delete quota
         except exceptions.FailedNSMFRequestException as e:
             try:
                 db_manager.update_va_with_status(vertical_application_slice_id, InstantiationStatus.FAILED.name)
@@ -320,7 +315,6 @@ class VASCtrl(Resource):
             db_manager.insert_network_slice_status(ns_id, InstantiationStatus.INSTANTIATING.name)
             db_manager.update_va_status_with_ns(vertical_application_slice_id, ns_id)
         # Abort if DB entries cannot be created and/or updated
-        # TODO: Delete quota
         except exceptions.DBException as e:
             try:
                 db_manager.update_va_with_status(vertical_application_slice_id, InstantiationStatus.FAILED.name)
@@ -352,7 +346,6 @@ class NetworkSliceStatusUpdateHandler(Resource):
             abort(400, str(e))
 
         # Abort if notification type is 'ERROR'
-        # TODO: Delete quota
         if nsi_notification_type == NsiNotificationType.ERROR.name:
             try:
                 db_manager.update_network_slice_status(ns_id, InstantiationStatus.FAILED.name)
@@ -363,7 +356,6 @@ class NetworkSliceStatusUpdateHandler(Resource):
 
                 return '', 200
             # Abort if DB entries cannot be updated
-            # TODO: Delete quota
             except exceptions.DBException as e:
                 try:
                     db_manager.update_va_with_status_by_network_slice(ns_id, InstantiationStatus.FAILED.name)
@@ -379,7 +371,6 @@ class NetworkSliceStatusUpdateHandler(Resource):
                     or nsi_status == NsiStatus.OTHER.name:
                 return '', 200
             # Abort if the Network Slice instantiation failed
-            # TODO: Delete quota
             elif nsi_status == NsiStatus.FAILED.name:
                 try:
                     db_manager.update_network_slice_status(ns_id, InstantiationStatus.FAILED.name)
@@ -390,7 +381,6 @@ class NetworkSliceStatusUpdateHandler(Resource):
 
                     return '', 200
                 # Abort if DB entries cannot be updated
-                # TODO: Delete quota
                 except exceptions.DBException as e:
                     try:
                         db_manager.update_va_with_status_by_network_slice(ns_id, InstantiationStatus.FAILED.name)
@@ -405,7 +395,6 @@ class NetworkSliceStatusUpdateHandler(Resource):
                     db_manager.update_network_slice_status(ns_id, InstantiationStatus[nsi_status].name)
                     return '', 200
                 # Abort if DB entry cannot be updated
-                # TODO: Delete quota
                 except exceptions.DBException as e:
                     try:
                         db_manager.update_va_with_status_by_network_slice(ns_id, InstantiationStatus.FAILED.name)
@@ -425,7 +414,6 @@ class NetworkSliceStatusUpdateHandler(Resource):
 
                     return '', 200
                 # Abort if DB entries cannot be updated
-                # TODO: Delete quota
                 except exceptions.DBException as e:
                     try:
                         db_manager.update_va_with_status_by_network_slice(ns_id, InstantiationStatus.FAILED.name)
