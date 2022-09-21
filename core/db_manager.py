@@ -74,6 +74,22 @@ def get_va_quota_status_by_vas_id(vertical_application_slice_id: str):
         raise DBException('Error while fetching vertical_application_quota_status: ' + str(error))
 
 
+def delete_va_quota_by_vas_id(vertical_application_slice_id: str):
+    # Delete all va_quota_status linked to the given vertical_application_slice_id
+    command = """DELETE FROM vertical_application_quota_status WHERE vertical_application_slice_id = (%s)"""
+    try:
+        cur = db_conn.cursor()
+        cur.execute(command, (vertical_application_slice_id,))
+        cur.close()
+        db_conn.commit()
+
+        db_log.info('Removed vertical_application_quota_status for vertical_application_slice_id %s',
+                    vertical_application_slice_id)
+    except (Exception, DatabaseError) as error:
+        db_log.error(str(error))
+        raise DBException('Error while removing vertical_application_quota_status: ' + str(error))
+
+
 def insert_network_slice_status(network_slice_id: str, network_slice_status: str):
     # Create a new entry <network_slice_id, network_slice_status> in the DB for a network slice
     command = """INSERT INTO network_slice_status(network_slice_id, network_slice_status) VALUES (%s, %s)"""
@@ -135,6 +151,21 @@ def get_network_slice_status_by_id(network_slice_id: str):
     except DatabaseError as error:
         db_log.error(str(error))
         raise DBException('Error while fetching network_slice_status: ' + str(error))
+
+
+def delete_network_slice_status_by_id(network_slice_id: str):
+    # Delete network_slice_status entry by network_slice_id (PRIMARY KEY)
+    command = """DELETE FROM network_slice_status WHERE network_slice_id = (%s)"""
+    try:
+        cur = db_conn.cursor()
+        cur.execute(command, (network_slice_id,))
+        cur.close()
+        db_conn.commit()
+
+        db_log.info('Removed network_slice_status %s', network_slice_id)
+    except DatabaseError as error:
+        db_log.error(str(error))
+        raise DBException('Error while removing network_slice_status: ' + str(error))
 
 
 def insert_va_status(vertical_application_slice_status: str, intent):
@@ -262,3 +293,18 @@ def get_va_status_by_network_slice(network_slice_id: str):
     except DatabaseError as error:
         db_log.error(str(error))
         raise DBException('Error while fetching vertical_application_slice_status: ' + str(error))
+
+
+def delete_va_status_by_id(vertical_application_slice_id: str):
+    # Delete va_status entry by vertical_application_slice_id (PRIMARY KEY)
+    command = """DELETE FROM vertical_application_slice_status WHERE vertical_application_slice_id = (%s)"""
+    try:
+        cur = db_conn.cursor()
+        cur.execute(command, (vertical_application_slice_id,))
+        cur.close()
+        db_conn.commit()
+
+        db_log.info('Removed vertical_application_slice_status %s', vertical_application_slice_id)
+    except DatabaseError as error:
+        db_log.error(str(error))
+        raise DBException('Error while removing vertical_application_slice_status: ' + str(error))

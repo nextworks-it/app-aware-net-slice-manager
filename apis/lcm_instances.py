@@ -512,7 +512,34 @@ class VASCtrlByID(Resource):
     @api.response(404, 'Not Found', model=error_msg)
     @api.response(500, 'Internal Server Error', model=error_msg)
     def delete(self, vasi):
-        print(vasi)
+        # Get Vertical Application Slice Status by VASI
+        vasi = str(vasi)
+        _vas_status = None
+        try:
+            _vas_status = db_manager.get_va_status_by_id(vasi)
+        except exceptions.NotExistingEntityException as e:
+            abort(404, str(e))
+        except exceptions.DBException as e:
+            abort(500, str(e))
+
+        if _vas_status[1] != InstantiationStatus.FAILED.name and\
+                _vas_status[1] != InstantiationStatus.TERMINATED.name:
+            abort(405, 'Vertical Application Slice Info' + vasi +
+                  ' cannot be removed. Current Status: ' + _vas_status[1])
+
+        if _vas_status[4] is not None:
+            try:
+                db_manager.delete_network_slice_status_by_id(_vas_status[4])
+                return '', 204
+            except exceptions.DBException as e:
+                abort(500, str(e))
+
+        try:
+            db_manager.delete_va_quota_by_vas_id(vasi)
+            db_manager.delete_va_status_by_id(vasi)
+        except exceptions.DBException as e:
+            abort(500, str(e))
+
         return '', 204
 
 
@@ -554,7 +581,8 @@ class VASTerminationCtrl(Resource):
         except exceptions.DBException as e:
             abort(500, str(e))
 
-        if _vas_status[1] != InstantiationStatus.INSTANTIATED.name:
+        if _vas_status[1] != InstantiationStatus.INSTANTIATED.name and\
+                _vas_status[1] != InstantiationStatus.FAILED.name:
             abort(405, 'Vertical Application Slice ' + vasi +
                   ' cannot be terminated. Current Status: ' + _vas_status[1])
 
