@@ -602,7 +602,9 @@ class VASTerminationCtrl(Resource):
 
         ns_id = _vas_status[2]
         try:
-            nsmf_manager.nsmf_terminate(ns_id, '1A530637289A03B07199A44E8D531427')
+            # jsessionid = nsmf_manager.nsmf_login('admin', 'admin')
+            jsessionid = '1A530637289A03B07199A44E8D531427'
+            nsmf_manager.nsmf_terminate(ns_id, jsessionid)
         except exceptions.FailedNSMFRequestException as e:
             abort(500, str(e))
 
