@@ -527,9 +527,10 @@ class VASCtrlByID(Resource):
             abort(405, 'Vertical Application Slice Info' + vasi +
                   ' cannot be removed. Current Status: ' + _vas_status[1])
 
-        if _vas_status[4] is not None:
+        ns_id = _vas_status[2]
+        if ns_id is not None:
             try:
-                db_manager.delete_network_slice_status_by_id(_vas_status[4])
+                db_manager.delete_network_slice_status_by_id(ns_id)
                 return '', 204
             except exceptions.DBException as e:
                 abort(500, str(e))
