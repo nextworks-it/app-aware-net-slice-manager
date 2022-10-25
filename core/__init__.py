@@ -3,6 +3,7 @@ from pathlib import Path
 from json import loads
 import logging
 import psycopg2
+import yaml
 
 # Configure logging
 logging.basicConfig(
@@ -100,13 +101,6 @@ if parser.has_section('qi'):
 else:
     raise Exception('Section qi not found in the config.ini file')
 
-# Load Clusters Map from config.ini
-clusters_map = {}
-if parser.has_section('clusters_map'):
-    params = parser.items('clusters_map')
-    for param in params:
-        clusters_map[param[0]] = param[1]
-
 # Load nsmf section from config.ini
 nsmf_url = None
 if parser.has_section('nsmf'):
@@ -115,3 +109,11 @@ if parser.has_section('nsmf'):
         raise Exception('NSMF URL not found in nsmf section of config.ini file')
 else:
     raise Exception('Section nsmf not found in the config.ini file')
+
+# Load locations from locations.yaml config file
+locations = {}
+with open(Path(__file__).parent.resolve().joinpath('../locations.yaml'), 'r') as stream:
+    try:
+        locations = yaml.safe_load(stream)['locations']
+    except yaml.YAMLError as exc:
+        raise Exception(str(exc))

@@ -6,3 +6,4 @@ marshmallow
 psycopg2-binary
 aenum
 requests
+PyYAML

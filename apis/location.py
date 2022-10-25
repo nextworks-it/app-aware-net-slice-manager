@@ -1,4 +1,5 @@
 from flask_restx import Namespace, Resource, fields
+from core import locations
 
 api = Namespace('location', description='Application-Aware NSM Location APIs')
 
@@ -6,9 +7,12 @@ api = Namespace('location', description='Application-Aware NSM Location APIs')
 
 geographical_area = api.model('geographical_area', {
     'geographicalAreaId': fields.String(required=True),
+    'name': fields.String(required=True),
+    'k8sContext': fields.String(required=True),
     'latitude': fields.Float(required=True),
     'longitude': fields.Float(required=True),
-    'coverageRadio': fields.Float(required=True)
+    'coverageRadius': fields.Float(required=True),
+    'segment': fields.String(required=True)
 })
 
 # Error Message Model Specification
@@ -26,4 +30,4 @@ class LocationCtrl(Resource):
     @api.response(403, 'Forbidden', model=error_msg)
     @api.response(500, 'Internal Server Error', model=error_msg)
     def get(self):
-        return []
+        return locations
