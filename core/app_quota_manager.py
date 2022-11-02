@@ -3,9 +3,8 @@ from kubernetes.config.kube_config import ConfigException
 from kubernetes.client.rest import ApiException
 from core import quota_log
 from core import exceptions
-from core import clusters_map
+from core import locations
 from base64 import b64decode
-from core.enums import Group
 import uuid
 import re
 
@@ -171,7 +170,11 @@ def allocate_quota(computing_constraint, context: str):
 
 def aggregate_quotas(cs_a: dict, cs_b: dict) -> dict:
     if cs_a is None:
-        return cs_b
+        return {
+            'cpu': cs_b['cpu'],
+            'ram': cs_b['ram'],
+            'storage': cs_b['storage']
+        }
 
     cpu_a = pattern.search(cs_a['cpu'])
     ram_a = pattern.search(cs_a['ram'])
@@ -184,13 +187,10 @@ def aggregate_quotas(cs_a: dict, cs_b: dict) -> dict:
     }
 
 
-def allocate_quotas(computing_constraints):
+def allocate_quotas(location_constraints, computing_constraints):
     # Allocate quota for each computing constraint in the request
     k8s_configs = []
-    default_computing_constraint = None
-    edge_computing_constraint = None
-    core_computing_constraint = None
-    cloud_computing_constraint = None
+
     for computing_constraint in computing_constraints:
         # Requirements must match the regex e.g. 4Gi
         if not pattern.match(computing_constraint.get('cpu')) or \
@@ -199,29 +199,27 @@ def allocate_quotas(computing_constraints):
             raise exceptions.QuantitiesMalformedException('Quantities must match the regular expression '
                                                           '^([+-]?[0-9.]+)([eEinumkKMGTP]*[-+]?[0-9]*)$')
 
-        group = computing_constraint.get('group')
-        if group is None:
-            default_computing_constraint = aggregate_quotas(default_computing_constraint, computing_constraint)
-        elif group == Group.EDGE.name:
-            edge_computing_constraint = aggregate_quotas(edge_computing_constraint, computing_constraint)
-        elif group == Group.CORE.name:
-            core_computing_constraint = aggregate_quotas(core_computing_constraint, computing_constraint)
-        elif group == Group.CLOUD.name:
-            cloud_computing_constraint = aggregate_quotas(cloud_computing_constraint, computing_constraint)
-        else:
-            continue
+    components_location_map = {}
+    for loc in location_constraints:
+        if loc['geographicalAreaId'] not in components_location_map:
+            components_location_map[loc['geographicalAreaId']] = []
 
-    try:
-        if default_computing_constraint is not None:
-            k8s_configs.append(allocate_quota(default_computing_constraint, clusters_map['default']))
-        if edge_computing_constraint is not None:
-            k8s_configs.append(allocate_quota(edge_computing_constraint, clusters_map['edge']))
-        if core_computing_constraint is not None:
-            k8s_configs.append(allocate_quota(core_computing_constraint, clusters_map['core']))
-        if cloud_computing_constraint is not None:
-            k8s_configs.append(allocate_quota(cloud_computing_constraint, clusters_map['cloud']))
-    except exceptions.MissingContextException as e:
-        raise e
+        components_location_map[loc['geographicalAreaId']].append(loc['applicationComponentId'])
+
+    quotas = {}
+    for geographicalAreaId, components in components_location_map.items():
+        quota = None
+        for component in components:
+            quota = aggregate_quotas(quota, [cc for cc in computing_constraints
+                                             if cc['applicationComponentId'] == component][0])
+        quotas[geographicalAreaId] = quota
+
+    for geographicalAreaId, quota in quotas.items():
+        k8s_config = allocate_quota(quota, [location for location in locations
+                                            if location['geographicalAreaId']
+                                            == geographicalAreaId][0]['k8sContext'])
+        k8s_config['geographicalAreaId'] = geographicalAreaId
+        k8s_configs.append(k8s_config)
 
     return k8s_configs
 

@@ -17,15 +17,11 @@ api = Namespace('lcm/instances', description='Application-Aware NSM LCM APIs')
 
 location_constraint = api.model('location_constraint', {
     'geographicalAreaId': fields.String,
-    'name': fields.String,
-    'latitude': fields.Float,
-    'longitude': fields.Float,
-    'coverageRadio': fields.Float
+    'applicationComponentId': fields.String
 }, strict=True)
 
 computing_constraint = api.model('computing_constraint', {
     'applicationComponentId': fields.String,
-    'group': fields.String(enum=['EDGE', 'CORE', 'CLOUD']),
     'ram': fields.String(required=True),
     'cpu': fields.String(required=True),
     'storage': fields.String(required=True)
@@ -117,6 +113,7 @@ user = api.model('user', {
     'name': fields.String(required=True)
 }, strict=True)
 kubeconfig = api.model('kubeconfig', {
+    'geographicalAreaId': fields.String(required=True),
     'apiVersion': fields.String(required=True),
     'clusters': fields.Nested(cluster, required=True, as_list=True, description='K8s Clusters', skip_none=True),
     'contexts': fields.Nested(context, required=True, as_list=True, description='K8s Contexts', skip_none=True),
@@ -239,7 +236,8 @@ class VASCtrl(Resource):
         # Allocate K8s quota for each compute constraint
         k8s_configs = None
         try:
-            k8s_configs = app_quota_manager.allocate_quotas(vas_intent['computingConstraints'])
+            k8s_configs = app_quota_manager.allocate_quotas(vas_intent['locationConstraints'],
+                                                            vas_intent['computingConstraints'])
         # Abort if quota cannot be allocated
         except (exceptions.MissingContextException, exceptions.QuantitiesMalformedException) as e:
             try:
@@ -589,11 +587,12 @@ class VASTerminationCtrl(Resource):
         app_quota_manager.delete_quotas(_va_quota_status)
 
         ns_id = _vas_status[2]
-        try:
-            # jsessionid = nsmf_manager.nsmf_login('admin', 'admin')
-            jsessionid = '1A530637289A03B07199A44E8D531427'
-            nsmf_manager.nsmf_terminate(ns_id, jsessionid)
-        except exceptions.FailedNSMFRequestException as e:
-            abort(500, str(e))
+        if ns_id is not None:
+            try:
+                # jsessionid = nsmf_manager.nsmf_login('admin', 'admin')
+                jsessionid = '1A530637289A03B07199A44E8D531427'
+                nsmf_manager.nsmf_terminate(ns_id, jsessionid)
+            except exceptions.FailedNSMFRequestException as e:
+                abort(500, str(e))
 
         return '', 204
