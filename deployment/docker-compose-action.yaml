@@ -44,6 +44,7 @@ services:
     volumes:
       - ${KUBECONFIG}:/root/.kube/config
       - ${CONFIGINI}:/app-aware-nsm/config.ini
+      - ${LOCATIONS}:/app-aware-nsm/locations.yaml
     ports:
       - '5000:5000'
     depends_on:

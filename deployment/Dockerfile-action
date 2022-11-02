@@ -13,6 +13,7 @@ COPY setup.py setup.py
 COPY requirements.txt requirements.txt
 
 VOLUME /app-aware-nsm/config.ini
+VOLUME /app-aware-nsm/locations.yaml
 
 RUN pip3 install -r requirements.txt
 

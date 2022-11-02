@@ -13,6 +13,7 @@ COPY core/ core/
 COPY app.py app.py
 COPY setup.py setup.py
 COPY deployment/config/config.ini config.ini
+COPY deployment/config/locations.yaml locations.yaml
 COPY requirements.txt requirements.txt
 
 RUN pip3 install -r requirements.txt
