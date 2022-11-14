@@ -308,3 +308,76 @@ def delete_va_status_by_id(vertical_application_slice_id: str):
     except DatabaseError as error:
         db_log.error(str(error))
         raise DBException('Error while removing vertical_application_slice_status: ' + str(error))
+
+
+def insert_location(location: dict):
+    # Create a new entry <uuid, name, k8s_context, latitude, longitude, coverage_radius, segment> in the DB
+    command = """
+    INSERT INTO locations(name, k8s_context, latitude, longitude, coverage_radius, segment)
+    VALUES (%s, %s, %s, %s, %s, %s) RETURNING geographical_area_id
+    """
+    try:
+        cur = db_conn.cursor()
+        cur.execute(command, (location['name'], location['k8sContext'],
+                              location['latitude'], location['longitude'],
+                              location['coverageRadius'], location['segment']))
+        geographical_area_id = cur.fetchone()[0]
+        cur.close()
+        db_conn.commit()
+
+        db_log.info('Created new location with ID %s', geographical_area_id)
+
+        return geographical_area_id
+    except (Exception, DatabaseError) as error:
+        db_log.error(str(error))
+        raise DBException('Error while creating location: ' + str(error))
+
+
+def get_locations():
+    # Retrieve all the location entries from the DB
+    command = """SELECT * FROM locations"""
+    try:
+        cur = db_conn.cursor()
+        cur.execute(command)
+        locations = cur.fetchall()
+        cur.close()
+
+        return locations
+    except (Exception, DatabaseError) as error:
+        db_log.error(str(error))
+        raise DBException('Error while fetching locations: ' + str(error))
+
+
+def update_location(geographical_area_id: str, location: dict):
+    # Update a location entry in the DB
+    command = """UPDATE locations SET name = %s, k8s_context = %s, latitude = %s, longitude = %s,
+    coverage_radius = %s, segment = %s WHERE geographical_area_id = %s
+    """
+    try:
+        cur = db_conn.cursor()
+        cur.execute(command, (location['name'], location['k8sContext'],
+                              location['latitude'], location['longitude'],
+                              location['coverageRadius'], location['segment'],
+                              geographical_area_id))
+        cur.close()
+        db_conn.commit()
+
+        db_log.info('Updated location %s', geographical_area_id)
+    except (Exception, DatabaseError) as error:
+        db_log.error(str(error))
+        raise DBException('Error while updating location: ' + geographical_area_id)
+
+
+def delete_location(geographical_area_id: str):
+    # Delete location by geographical_area_id
+    command = """DELETE FROM locations WHERE geographical_area_id = %s"""
+    try:
+        cur = db_conn.cursor()
+        cur.execute(command, (geographical_area_id,))
+        cur.close()
+        db_conn.commit()
+
+        db_log.info('Removed location geographical_area_id %s', geographical_area_id)
+    except (Exception, DatabaseError) as error:
+        db_log.error(str(error))
+        raise DBException('Error while removing location %s: ' + geographical_area_id)
