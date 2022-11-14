@@ -3,7 +3,7 @@ from kubernetes.config.kube_config import ConfigException
 from kubernetes.client.rest import ApiException
 from core import quota_log
 from core import exceptions
-from core import locations
+from core import db_manager
 from base64 import b64decode
 import uuid
 import re
@@ -214,6 +214,18 @@ def allocate_quotas(location_constraints, computing_constraints):
                                              if cc['applicationComponentId'] == component][0])
         quotas[geographicalAreaId] = quota
 
+    _locations = db_manager.get_locations()
+    locations = []
+    for _location in _locations:
+        locations.append({
+            'geographicalAreaId': _location[0],
+            'name': _location[1],
+            'k8sContext': _location[2],
+            'latitude': _location[3],
+            'longitude': _location[4],
+            'coverageRadius': _location[5],
+            'segment': _location[6]
+        })
     for geographicalAreaId, quota in quotas.items():
         k8s_config = allocate_quota(quota, [location for location in locations
                                             if location['geographicalAreaId']
