@@ -46,6 +46,12 @@ def create_constrained_sa(core_api: client.CoreV1Api, host: str,
 
     quota_log.info('Created ServiceAccount %s in K8s cluster %s.', sa_name, host)
 
+    sa_secret = client.V1Secret(metadata=client.V1ObjectMeta(name=sa_name + '-token', annotations={
+        'kubernetes.io/service-account.name': sa_name}), type='kubernetes.io/service-account-token')
+    core_api.create_namespaced_secret(ns_name, sa_secret)
+
+    quota_log.info('Created Secret Token for Service Account %s in K8s cluster %s.', sa_name, host)
+
     # Create ClusterRole to define Service Accounts permissions in given namespace(s)
     c_role = client.V1ClusterRole(
         metadata=client.V1ObjectMeta(name='ns-sa-permissions'),
@@ -115,24 +121,10 @@ def allocate_quota(computing_constraint, context: str):
     # Create the resources for the quota
     ns_name = create_constrained_ns(core_api, host, computing_constraint)
     sa_name = create_constrained_sa(core_api, host, rbac_api, ns_name)
-
-    # Retrieve the secrets created in the namespace
-    secrets = core_api.list_namespaced_secret(ns_name).items
-    while len(secrets) != 2:
-        secrets = core_api.list_namespaced_secret(ns_name).items
-
-    # Filter for the secret of the ServiceAccount created
-    secret_name = sa_name + '-token-'
-    secrets = [x for x in secrets if secret_name in x.metadata.name]
-
-    secrets_len = len(secrets)
-    if secrets_len == 0:
-        raise exceptions.ServiceAccountSecretException('Missing ServiceAccount Secret for ServiceAccount ' + sa_name)
-    elif secrets_len > 1:
-        raise exceptions.ServiceAccountSecretException('Too Many ServiceAccount Secret for ServiceAccount ' + sa_name)
+    secret = core_api.read_namespaced_secret(sa_name + '-token', ns_name)
 
     # Get the ca.crt and token of the ServiceAccount created
-    sa_secret_data = secrets[0].data
+    sa_secret_data = secret.data
     sa_secret_ca_crt = sa_secret_data['ca.crt']
     sa_secret_token = b64decode(sa_secret_data['token']).decode('utf-8')
 
