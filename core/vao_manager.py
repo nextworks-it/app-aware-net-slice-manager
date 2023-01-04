@@ -46,6 +46,8 @@ def notify(ns_id: str):
 
     try:
         requests.post(notification_uri, json=_vas_info)
+
+        vao_log.info('Notification sent to %s : %s', notification_uri, _vas_info)
     except requests.exceptions.RequestException as e:
         msg = str(e)
         vao_log.info(msg)
