@@ -4,22 +4,24 @@ from kubernetes.config.kube_config import KubeConfigLoader, KubeConfigMerger
 from kubernetes.config import config_exception
 import yaml
 import os
+from core.exceptions import PlatformManagerNotReadyException
 
 def get_config_from_platform_manager() -> dict:
     try:
         ret = requests.get(f"http://{platform_manager_url}/api/v1/platform-manager/platforms")
+        ret_list = ret.json()
+        kubeconfig_list = []
+        for k in ret_list:
+            try:
+                if validate_kubeconfig(k['platformConfig']['config']):
+                    kubeconfig_list.append(k['platformConfig']['config'])                
+            except KeyError as e:
+                platform_manager_log.error(f"Malformatted json from platform manager {e}")
+        return kubeconfig_list
     except requests.exceptions.RequestException as e:
         platform_manager_log.error(f"Failed to get platforms from platform manager: {e}")
-
-    ret_list = ret.json()
-    kubeconfig_list = []
-    for k in ret_list:
-        try:
-            if validate_kubeconfig(k['platformConfig']['config']):
-                kubeconfig_list.append(k['platformConfig']['config'])                
-        except KeyError as e:
-            platform_manager_log.error(f"Malformatted json from platform manager {e}")
-    return kubeconfig_list
+        raise PlatformManagerNotReadyException
+    
 
 def get_local_config() -> dict:
     if os.path.exists('.kube/config'):

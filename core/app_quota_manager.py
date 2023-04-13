@@ -7,6 +7,7 @@ from core import db_manager
 from base64 import b64decode
 import uuid
 import re
+from core import platform_manager_client
 
 pattern = re.compile('^([+-]?[0-9.]+)([eEinumkKMGTP]*[-+]?[0-9]*)$')
 
@@ -104,6 +105,7 @@ def allocate_quota(computing_constraint, context: str):
     try:
         # Load the kubeconfig at .kube/config and change context to create
         # the resources for the quota in the specified K8s cluster
+        platform_manager_client.update_local_config()
         config.load_kube_config(context=context)
     except ConfigException:
         # If .kube/config context is missing
@@ -229,6 +231,7 @@ def allocate_quotas(location_constraints, computing_constraints):
 
 
 def delete_quota(kubeconfig):
+    platform_manager_client.update_local_config()
     config.load_kube_config(context=kubeconfig['current-context'])
     with client.ApiClient() as api_client:
         core_api = client.CoreV1Api(api_client)

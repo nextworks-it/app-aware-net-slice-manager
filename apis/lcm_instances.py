@@ -157,6 +157,12 @@ class VASPostSchema(Schema):
 
 vas_post_schema = VASPostSchema()
 
+@api.route('/healthcheck')
+class Healthckeck(Resource):
+    @api.doc('Healthcheck endpoint')
+    @api.response(200, 'Healty')
+    def get(self):
+        return "Healty"
 
 @api.route('/')
 class VASCtrl(Resource):
@@ -323,6 +329,7 @@ class VASCtrl(Resource):
                 abort(500, str(e))
 
         return vertical_application_slice_id
+
 
 
 @api.route('/network_slice/status_update')

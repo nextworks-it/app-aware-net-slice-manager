@@ -36,3 +36,6 @@ class FailedNSMFRequestException(Exception):
 
 class FailedVAONotificationException(Exception):
     pass
+
+class PlatformManagerNotReadyException(Exception):
+    pass
