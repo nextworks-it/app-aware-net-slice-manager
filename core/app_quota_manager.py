@@ -208,20 +208,29 @@ def allocate_quotas(location_constraints, computing_constraints):
 
     _locations = db_manager.get_locations()
     locations = []
-    for _location in _locations:
+    for location in _locations:
+        cluster_id = location[2]
+
+        cluster = db_manager.get_cluster_by_id(cluster_id)
+        nodes = db_manager.get_cluster_nodes_by_cluster_id(cluster_id)
+
         locations.append({
-            'geographicalAreaId': _location[0],
-            'name': _location[1],
-            'k8sContext': _location[2],
-            'latitude': _location[3],
-            'longitude': _location[4],
-            'coverageRadius': _location[5],
-            'segment': _location[6]
+            'geographicalAreaId': location[0],
+            'locationName': location[1],
+            'cluster': {
+                'name': cluster[1],
+                'type': cluster[2],
+                'nodes': [{'name': n[1], 'labels': n[2]} for n in nodes]
+            },
+            'latitude': location[3],
+            'longitude': location[4],
+            'coverageRadius': location[5],
+            'segment': location[6]
         })
     for geographicalAreaId, quota in quotas.items():
         k8s_config = allocate_quota(quota, [location for location in locations
                                             if location['geographicalAreaId']
-                                            == geographicalAreaId][0]['k8sContext'])
+                                            == geographicalAreaId][0]['cluster']['name'])
         k8s_config['geographicalAreaId'] = geographicalAreaId
         k8s_configs.append(k8s_config)
 
