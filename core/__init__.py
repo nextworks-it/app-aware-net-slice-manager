@@ -3,6 +3,7 @@ from pathlib import Path
 from json import loads
 import logging
 import psycopg2
+import requests
 
 # Configure logging
 logging.basicConfig(
@@ -16,6 +17,7 @@ quota_log = logging.getLogger('app-quota-manager')
 db_log = logging.getLogger('db-manager')
 nsmf_log = logging.getLogger('nsmf-manager')
 vao_log = logging.getLogger('vao-manager')
+platform_manager_log = logging.getLogger('platform-manager')
 
 # Load the config.ini file
 parser = ConfigParser()
@@ -119,3 +121,12 @@ if parser.has_section('nsmf'):
         raise Exception('NSMF URL not found in nsmf section of config.ini file')
 else:
     raise Exception('Section nsmf not found in the config.ini file')
+
+# Load platform manager section from config.ini
+platform_manager_url = None
+if parser.has_section('platform_manager'):
+    platform_manager_url = parser.get('platform_manager', 'url')
+    if platform_manager_url is None:
+        raise Exception('PLATFORM MANAGER URL not found in platform_manager section of config.ini file')
+else:
+    raise Exception('Section platform_manager not found in the config.ini file')

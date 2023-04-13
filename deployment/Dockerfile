@@ -2,9 +2,7 @@ FROM python:3.8-slim-buster
 
 RUN apt-get update -y && apt-get install -y python3-pip
 
-WORKDIR /root/.kube/
-
-COPY deployment/config/config config
+RUN mkdir /root/.kube/
 
 WORKDIR /app-aware-nsm
 
@@ -18,5 +16,7 @@ COPY requirements.txt requirements.txt
 RUN pip3 install -r requirements.txt
 
 EXPOSE 5000
+
+RUN apt update && apt install inetutils-ping curl -y
 
 CMD [ "python3", "-m" , "flask", "run", "--host=0.0.0.0"]

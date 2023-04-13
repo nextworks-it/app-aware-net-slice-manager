@@ -29,7 +29,7 @@ services:
     image: postgres
     restart: always
     volumes:
-      - /opt/app-aware-nsm/postgres:/var/lib/postgresql/data
+      - postgres-data:/var/lib/postgresql/data
     environment:
       POSTGRES_DB: app-aware-nsm
       POSTGRES_USER: postgres
@@ -48,3 +48,6 @@ services:
       - '5000:5000'
     depends_on:
       - postgres
+
+volumes:
+  postgres-data:

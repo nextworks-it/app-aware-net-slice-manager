@@ -1,6 +1,7 @@
 import logging
 from flask import Flask
 from apis import api
+from core.platform_manager_client import update_local_config
 
 # configure root logger
 logging.basicConfig(
@@ -12,6 +13,7 @@ logging.basicConfig(
 app = Flask(__name__)
 app.url_map.strict_slashes = False
 api.init_app(app)
+update_local_config()
 
 if __name__ == '__main__':
     app.run()
