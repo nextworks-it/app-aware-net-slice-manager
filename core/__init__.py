@@ -73,14 +73,35 @@ commands = (
     )
     """,
     """
+    CREATE TABLE IF NOT EXISTS clusters(
+        cluster_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        name VARCHAR(255),
+        type VARCHAR(255)
+    )
+    """,
+    """
+    CREATE TABLE IF NOT EXISTS cluster_nodes(
+        cluster_node_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        name VARCHAR(255),
+        labels JSON NOT NULL,
+        cluster_id UUID NOT NULL,
+        FOREIGN KEY (cluster_id)
+            REFERENCES clusters (cluster_id)
+            ON UPDATE CASCADE ON DELETE CASCADE
+    )
+    """,
+    """
     CREATE TABLE IF NOT EXISTS locations(
         geographical_area_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        name VARCHAR(255),
-        k8s_context VARCHAR(255),
+        location_name VARCHAR(255),
+        cluster_id UUID NOT NULL,
         latitude FLOAT(8),
         longitude FLOAT(8),
         coverage_radius FLOAT(8),
-        segment VARCHAR(255)
+        segment VARCHAR(255),
+        FOREIGN KEY (cluster_id)
+            REFERENCES clusters (cluster_id)
+            ON UPDATE CASCADE ON DELETE CASCADE
     )
     """
 )
