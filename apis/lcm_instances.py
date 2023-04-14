@@ -65,13 +65,6 @@ intent = api.model('intent', {
                                            description='List of Networking Constraints', skip_none=True)
 }, strict=True)
 
-scale_intent = api.model('scale_intent', {
-    'locationConstraints': fields.Nested(location_constraint, required=True, as_list=True,
-                                         description='List of Geographical Area Identifiers', skip_none=True),
-    'computingConstraints': fields.Nested(computing_constraint, required=True, as_list=True,
-                                          description='List of Computing Constraints', skip_none=True)
-}, strict=True)
-
 # Vertical Application Slice Status Model Specification
 
 vas_status = api.model('vas_status', {
@@ -535,14 +528,39 @@ class VASCtrlByID(Resource):
 class VASScaleCtrl(Resource):
 
     @api.doc('Request to scale a Vertical Application Slice Instance')
-    @api.expect(scale_intent, validate=True)
+    @api.expect(intent, validate=True)
     @api.response(204, 'Vertical Application Slice Instance Scaling Requested')
     @api.response(401, 'Unauthorized', model=error_msg)
     @api.response(403, 'Forbidden', model=error_msg)
     @api.response(404, 'Not Found', model=error_msg)
     @api.response(500, 'Internal Server Error', model=error_msg)
     def patch(self, vasi):
-        print(vasi)
+        # Get Vertical Application Slice Status by VASI
+        vasi = str(vasi)
+        _vas_status = None
+        try:
+            _vas_status = db_manager.get_va_status_by_id(vasi)
+        except exceptions.NotExistingEntityException as e:
+            abort(404, str(e))
+        except exceptions.DBException as e:
+            abort(500, str(e))
+
+        # Validate request parameters
+        errors = vas_post_schema.validate(request.args)
+        if errors:
+            abort(400, str(errors))
+
+        _va_quota_status = None
+        try:
+            _va_quota_status = db_manager.get_va_quota_status_by_vas_id(vasi)
+        except exceptions.DBException as e:
+            abort(500, str(e))
+
+        vas_intent = request.json
+        app_quota_manager.update_quotas(vas_intent['locationConstraints'],
+                                        vas_intent['computingConstraints'],
+                                        _va_quota_status)
+
         return '', 204
 
 
