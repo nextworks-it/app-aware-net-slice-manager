@@ -36,3 +36,7 @@ class FailedNSMFRequestException(Exception):
 
 class FailedVAONotificationException(Exception):
     pass
+
+
+class FailedQuotaScalingException(Exception):
+    pass
