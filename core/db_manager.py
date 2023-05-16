@@ -310,15 +310,196 @@ def delete_va_status_by_id(vertical_application_slice_id: str):
         raise DBException('Error while removing vertical_application_slice_status: ' + str(error))
 
 
-def insert_location(location: dict):
-    # Create a new entry <uuid, name, k8s_context, latitude, longitude, coverage_radius, segment> in the DB
+def insert_cluster_node(cluster_node: dict, cluster_id: str):
+    # Create a new entry <uuid, name, labels, cluster_id> in the DB
     command = """
-    INSERT INTO locations(name, k8s_context, latitude, longitude, coverage_radius, segment)
+    INSERT INTO cluster_nodes(name, labels, cluster_id)
+    VALUES (%s, %s, %s) RETURNING cluster_node_id
+    """
+    try:
+        cur = db_conn.cursor()
+        cur.execute(command, (cluster_node['name'], json.dumps(cluster_node['labels']), cluster_id))
+        cluster_node_id = cur.fetchone()[0]
+        cur.close()
+        db_conn.commit()
+
+        db_log.info('Created new cluster_node with ID %s', cluster_node_id)
+
+        return cluster_node_id
+    except (Exception, DatabaseError) as error:
+        db_log.error(str(error))
+        raise DBException('Error while creating cluster_node: ' + str(error))
+
+
+def get_cluster_nodes():
+    # Retrieve all the cluster_nodes entries from the DB
+    command = """SELECT * FROM cluster_nodes"""
+    try:
+        cur = db_conn.cursor()
+        cur.execute(command)
+        cluster_nodes = cur.fetchall()
+        cur.close()
+
+        return cluster_nodes
+    except (Exception, DatabaseError) as error:
+        db_log.error(str(error))
+        raise DBException('Error while fetching cluster_nodes: ' + str(error))
+
+
+def get_cluster_nodes_by_cluster_id(cluster_id: str):
+    # Retrieve all cluster_nodes linked to the given cluster_id
+    command = """SELECT * FROM cluster_nodes WHERE cluster_id = %s"""
+    try:
+        cur = db_conn.cursor()
+        cur.execute(command, (cluster_id,))
+        cluster_nodes = cur.fetchall()
+        cur.close()
+
+        return cluster_nodes
+    except DatabaseError as error:
+        db_log.error(str(error))
+        raise DBException('Error while fetching cluster_nodes: ' + str(error))
+
+
+def update_cluster_node(cluster_node_id: str, cluster_node: dict):
+    # Update a cluster_node entry in the DB
+    command = """UPDATE cluster_nodes SET name = %s, labels = %s WHERE cluster_node_id = %s
+    """
+    try:
+        cur = db_conn.cursor()
+        cur.execute(command, (cluster_node['name'], cluster_node['labels'], cluster_node_id))
+        cur.close()
+        db_conn.commit()
+
+        db_log.info('Updated cluster_node %s', cluster_node_id)
+    except (Exception, DatabaseError) as error:
+        db_log.error(str(error))
+        raise DBException('Error while updating cluster_node: ' + cluster_node_id)
+
+
+def delete_cluster_node(cluster_node_id: str):
+    # Delete cluster_node by cluster_node_id
+    command = """DELETE FROM cluster_nodes WHERE cluster_node_id = %s"""
+    try:
+        cur = db_conn.cursor()
+        cur.execute(command, (cluster_node_id,))
+        cur.close()
+        db_conn.commit()
+
+        db_log.info('Removed cluster_node %s', cluster_node_id)
+    except (Exception, DatabaseError) as error:
+        db_log.error(str(error))
+        raise DBException('Error while removing cluster_node %s: ' + cluster_node_id)
+
+
+def delete_cluster_node_by_cluster_id(cluster_id: str):
+    # Delete cluster_node by cluster_id
+    command = """DELETE FROM cluster_nodes WHERE cluster_id = %s"""
+    try:
+        cur = db_conn.cursor()
+        cur.execute(command, (cluster_id,))
+        cur.close()
+        db_conn.commit()
+
+        db_log.info('Removed cluster_nodes for cluster_id %s', cluster_id)
+    except (Exception, DatabaseError) as error:
+        db_log.error(str(error))
+        raise DBException('Error while removing cluster_nodes for cluster_id %s: ' + cluster_id)
+
+
+def insert_cluster(cluster: dict):
+    # Create a new entry <uuid, name, type> in the DB
+    command = """
+    INSERT INTO clusters(name, type) VALUES (%s, %s) RETURNING cluster_id
+    """
+    try:
+        cur = db_conn.cursor()
+        cur.execute(command, (cluster['name'], cluster['type']))
+        cluster_id = cur.fetchone()[0]
+        cur.close()
+        db_conn.commit()
+
+        db_log.info('Created new cluster with ID %s', cluster_id)
+
+        return cluster_id
+    except (Exception, DatabaseError) as error:
+        db_log.error(str(error))
+        raise DBException('Error while creating cluster: ' + str(error))
+
+
+def get_clusters():
+    # Retrieve all the cluster entries from the DB
+    command = """SELECT * FROM clusters"""
+    try:
+        cur = db_conn.cursor()
+        cur.execute(command)
+        clusters = cur.fetchall()
+        cur.close()
+
+        return clusters
+    except (Exception, DatabaseError) as error:
+        db_log.error(str(error))
+        raise DBException('Error while fetching clusters: ' + str(error))
+
+
+def get_cluster_by_id(cluster_id: str):
+    # Retrieve cluster entry by cluster_id (PRIMARY KEY)
+    command = """SELECT * FROM clusters WHERE cluster_id = (%s)"""
+    try:
+        cur = db_conn.cursor()
+        cur.execute(command, (cluster_id,))
+        cluster = cur.fetchone()
+        cur.close()
+
+        if cluster is None:
+            raise NotExistingEntityException('cluster with ID ' + cluster_id + ' not found.')
+
+        return cluster
+    except DatabaseError as error:
+        db_log.error(str(error))
+        raise DBException('Error while fetching cluster: ' + str(error))
+
+
+def update_cluster(cluster_id: str, cluster: dict):
+    # Update a cluster entry in the DB
+    command = """UPDATE clusters SET name = %s, type = %s WHERE cluster_id = %s
+    """
+    try:
+        cur = db_conn.cursor()
+        cur.execute(command, (cluster['name'], cluster['type'], cluster_id))
+        cur.close()
+        db_conn.commit()
+
+        db_log.info('Updated cluster %s', cluster_id)
+    except (Exception, DatabaseError) as error:
+        db_log.error(str(error))
+        raise DBException('Error while updating cluster: ' + cluster_id)
+
+
+def delete_cluster(cluster_id: str):
+    # Delete cluster by cluster_id
+    command = """DELETE FROM clusters WHERE cluster_id = %s"""
+    try:
+        cur = db_conn.cursor()
+        cur.execute(command, (cluster_id,))
+        cur.close()
+        db_conn.commit()
+
+        db_log.info('Removed cluster %s', cluster_id)
+    except (Exception, DatabaseError) as error:
+        db_log.error(str(error))
+        raise DBException('Error while removing cluster %s: ' + cluster_id)
+
+
+def insert_location(location: dict, cluster_id: str):
+    # Create a new entry <uuid, location_name, cluster_id, latitude, longitude, coverage_radius, segment> in the DB
+    command = """
+    INSERT INTO locations(location_name, cluster_id, latitude, longitude, coverage_radius, segment)
     VALUES (%s, %s, %s, %s, %s, %s) RETURNING geographical_area_id
     """
     try:
         cur = db_conn.cursor()
-        cur.execute(command, (location['name'], location['k8sContext'],
+        cur.execute(command, (location['locationName'], cluster_id,
                               location['latitude'], location['longitude'],
                               location['coverageRadius'], location['segment']))
         geographical_area_id = cur.fetchone()[0]
@@ -348,17 +529,34 @@ def get_locations():
         raise DBException('Error while fetching locations: ' + str(error))
 
 
+def get_location_by_id(geographical_area_id: str):
+    # Retrieve location entry by geographical_area_id (PRIMARY KEY)
+    command = """SELECT * FROM locations WHERE geographical_area_id = (%s)"""
+    try:
+        cur = db_conn.cursor()
+        cur.execute(command, (geographical_area_id,))
+        location = cur.fetchone()
+        cur.close()
+
+        if location is None:
+            raise NotExistingEntityException('location with ID ' + geographical_area_id + ' not found.')
+
+        return location
+    except DatabaseError as error:
+        db_log.error(str(error))
+        raise DBException('Error while fetching location: ' + str(error))
+
+
 def update_location(geographical_area_id: str, location: dict):
     # Update a location entry in the DB
-    command = """UPDATE locations SET name = %s, k8s_context = %s, latitude = %s, longitude = %s,
+    command = """UPDATE locations SET location_name = %s, latitude = %s, longitude = %s,
     coverage_radius = %s, segment = %s WHERE geographical_area_id = %s
     """
     try:
         cur = db_conn.cursor()
-        cur.execute(command, (location['name'], location['k8sContext'],
-                              location['latitude'], location['longitude'],
-                              location['coverageRadius'], location['segment'],
-                              geographical_area_id))
+        cur.execute(command, (location['locationName'], location['latitude'],
+                              location['longitude'], location['coverageRadius'],
+                              location['segment'], geographical_area_id))
         cur.close()
         db_conn.commit()
 

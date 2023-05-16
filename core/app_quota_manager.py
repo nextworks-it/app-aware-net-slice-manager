@@ -1,3 +1,5 @@
+from typing import List
+
 from kubernetes import client, config
 from kubernetes.config.kube_config import ConfigException
 from kubernetes.client.rest import ApiException
@@ -181,10 +183,7 @@ def aggregate_quotas(cs_a: dict, cs_b: dict) -> dict:
     }
 
 
-def allocate_quotas(location_constraints, computing_constraints):
-    # Allocate quota for each computing constraint in the request
-    k8s_configs = []
-
+def build_quotas(location_constraints: dict, computing_constraints: dict) -> dict:
     for computing_constraint in computing_constraints:
         # Requirements must match the regex e.g. 4Gi
         if not pattern.match(computing_constraint.get('cpu')) or \
@@ -208,26 +207,79 @@ def allocate_quotas(location_constraints, computing_constraints):
                                              if cc['applicationComponentId'] == component][0])
         quotas[geographicalAreaId] = quota
 
+    return quotas
+
+
+def allocate_quotas(location_constraints: dict, computing_constraints: dict) -> List[dict]:
+    # Allocate quota for each computing constraint in the request
+    k8s_configs = []
+
+    quotas = build_quotas(location_constraints, computing_constraints)
+
     _locations = db_manager.get_locations()
     locations = []
-    for _location in _locations:
+    for location in _locations:
+        cluster_id = location[2]
+
+        cluster = db_manager.get_cluster_by_id(cluster_id)
+        nodes = db_manager.get_cluster_nodes_by_cluster_id(cluster_id)
+
         locations.append({
-            'geographicalAreaId': _location[0],
-            'name': _location[1],
-            'k8sContext': _location[2],
-            'latitude': _location[3],
-            'longitude': _location[4],
-            'coverageRadius': _location[5],
-            'segment': _location[6]
+            'geographicalAreaId': location[0],
+            'locationName': location[1],
+            'cluster': {
+                'name': cluster[1],
+                'type': cluster[2],
+                'nodes': [{'name': n[1], 'labels': n[2]} for n in nodes]
+            },
+            'latitude': location[3],
+            'longitude': location[4],
+            'coverageRadius': location[5],
+            'segment': location[6]
         })
+
     for geographicalAreaId, quota in quotas.items():
         k8s_config = allocate_quota(quota, [location for location in locations
                                             if location['geographicalAreaId']
-                                            == geographicalAreaId][0]['k8sContext'])
+                                            == geographicalAreaId][0]['cluster']['name'])
         k8s_config['geographicalAreaId'] = geographicalAreaId
         k8s_configs.append(k8s_config)
 
     return k8s_configs
+
+
+def update_quotas(location_constraints: dict, computing_constraints: dict, current_quotas):
+    quotas = build_quotas(location_constraints, computing_constraints)
+
+    for geographicalAreaId, quota in quotas.items():
+        current_quota = [current_quota for current_quota in current_quotas
+                         if current_quota[1]['geographicalAreaId'] == geographicalAreaId]
+
+        if len(current_quota) == 0:
+            raise exceptions.FailedQuotaScalingException('Missing quota for location ' + geographicalAreaId)
+
+        current_quota = current_quota[0][1]
+        ns_name = current_quota['contexts'][0]['context']['namespace']
+
+        rq = client.V1ResourceQuota(
+            metadata=client.V1ObjectMeta(name=ns_name + '-quota'),
+            spec=client.V1ResourceQuotaSpec(hard={
+                'requests.cpu': quota['cpu'],
+                'requests.memory': quota['ram'],
+                'limits.cpu': quota['cpu'],
+                'limits.memory': quota['ram'],
+                'requests.storage': quota['storage']
+            })
+        )
+
+        config.load_kube_config(context=current_quota['current-context'])
+        with client.ApiClient() as api_client:
+            core_api = client.CoreV1Api(api_client)
+
+        try:
+            core_api.patch_namespaced_resource_quota(ns_name + '-quota', ns_name, rq)
+        except ApiException as e:
+            raise e
 
 
 def delete_quota(kubeconfig):

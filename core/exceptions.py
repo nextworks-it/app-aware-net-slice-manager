@@ -39,3 +39,6 @@ class FailedVAONotificationException(Exception):
 
 class PlatformManagerNotReadyException(Exception):
     pass
+
+class FailedQuotaScalingException(Exception):
+    pass
