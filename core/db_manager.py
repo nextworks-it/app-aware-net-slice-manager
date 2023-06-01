@@ -2,7 +2,7 @@ from core import db_conn, db_log
 from psycopg2 import DatabaseError
 from core.exceptions import DBException, NotExistingEntityException
 import json
-
+import uuid
 
 def insert_va_quota_status(kubeconfig, vertical_application_slice_id: str):
     # Create a new entry <uuid, kubeconfig> in the DB for a vertical application quota

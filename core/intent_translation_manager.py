@@ -1,15 +1,23 @@
 from core import nest_catalogue_url, qi
 from core.enums import SliceType, IsolationLevel, IsolationLevelMapping
 from core.exceptions import FailedIntentTranslationException, NotImplementedException, MalformedIntentException
+from core.nsmf_manager import nsmf_onboard_dummy_nst, nsmf_translate_nst_to_nest
 from typing import List, Tuple
 from sys import maxsize
 import requests
-
+from requests.auth import HTTPBasicAuth
+import os
+import uuid
 
 # Retrieve all the NESTs from the NEST Catalogue
 def get_nests() -> List[dict]:
     try:
-        response = requests.get('http://' + nest_catalogue_url + '/ns/catalogue/nestemplate')
+        username = os.getenv("NSMF_USERNAME", default=None) 
+        password = os.getenv("NSMF_PASSWORD", default=None)
+        if username:          
+            response = requests.get('http://' + nest_catalogue_url + '/ns/catalogue/nestemplate', auth=HTTPBasicAuth(username, password))
+        else:
+            response = requests.get('http://' + nest_catalogue_url + '/ns/catalogue/nestemplate')
     except requests.exceptions.RequestException as e:
         raise FailedIntentTranslationException(str(e))
 
@@ -179,13 +187,36 @@ def select_embb_nest(isolation_level: str,
     return nest_slice_type_map[0][0]
 
 
+def onboard_dummy_nst():
+    return nsmf_onboard_dummy_nst()
+
+
+
+def translate_nst_to_nest(nst_id):
+    return nsmf_translate_nst_to_nest(nst_id)
+
+
 def select_nest(networking_constraints: List[dict]) -> str:
+    IANA = bool(os.getenv("IANA", False))
+    if IANA:
+        return str(uuid.uuid4())
+
+        # Onboard Dummy NST
+        nst_id = onboard_dummy_nst()
+
+        # Translate NST to NEST
+        nest = translate_nst_to_nest(nst_id)
+       
+        # Return NEST
+        return nest
+
     urllc = 0
     embb = 0
     min_delay = maxsize
     max_isolation_level = IsolationLevel.NO_ISOLATION
     max_dl_throughput = 0
     max_ul_throughput = 0
+    
 
     for networking_constraint in networking_constraints:
         slice_profiles = networking_constraint['sliceProfiles']

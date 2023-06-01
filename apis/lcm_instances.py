@@ -10,6 +10,8 @@ from core import vao_manager
 from marshmallow import Schema
 from threading import Thread
 import marshmallow.fields
+import requests
+import os
 
 api = Namespace('lcm/instances', description='Application-Aware NSM LCM APIs')
 
@@ -323,6 +325,14 @@ class VASCtrl(Resource):
             finally:
                 abort(500, str(e))
 
+        IANA = bool(os.getenv("IANA", False))
+        if IANA:
+            body = {
+                'nsiId': ns_id,
+                'nsiNotifType': 'STATUS_CHANGED',
+                'nsiStatus': 'INSTANTIATED'
+            }
+            requests.post("http://localhost:5000/lcm/instances/network_slice/status_update", json=body)
         return vertical_application_slice_id
 
 
@@ -342,7 +352,7 @@ class NetworkSliceStatusUpdateHandler(Resource):
         try:
             db_manager.get_network_slice_status_by_id(ns_id)
         except exceptions.NotExistingEntityException as e:
-            abort(400, str(e))
+            abort(400, f"Cannot handle notification from nsmf {str(e)}")
 
         # Abort if notification type is 'ERROR'
         if nsi_notification_type == NsiNotificationType.ERROR.name:
