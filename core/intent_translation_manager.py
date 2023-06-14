@@ -205,7 +205,7 @@ def select_nest(networking_constraints: List[dict]) -> str:
                     isolation_level = IsolationLevel[isolation_level]
                     if isolation_level.value > max_isolation_level.value:
                         max_isolation_level = isolation_level
-            elif slice_type == SliceType.EMBB.name:
+            elif slice_type == SliceType.EMBB.name or slice_type == SliceType.MMTC.name:
                 embb += 1
 
                 isolation_level = profile_params.get('isolationLevel')
