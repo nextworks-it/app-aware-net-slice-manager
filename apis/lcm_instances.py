@@ -572,7 +572,7 @@ class VASScaleCtrl(Resource):
             nsmf_manager.nsmf_scale(
                 ns_id=ns_id,
                 nssi_id=nsmf_manager.nsmf_get_nssi(ns_id, jsessionid),
-                networking_constraints=vas_intent['networking_constraints'],
+                networking_constraints=vas_intent['networkingConstraints'],
                 jsessionid=jsessionid
             )
         except exceptions.FailedNSMFRequestException as e:
