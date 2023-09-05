@@ -110,7 +110,9 @@ def nsmf_scale(ns_id: str, nssi_id: str, networking_constraints: dict, jsessioni
         'nssiId': nssi_id,
         'sliceSubnetType': 'CORE',
         'mmeInitialApnMaxBitrateDl': networking_constraints[0]['sliceProfiles'][0]['profileParams']['dlThroughput'],
-        'mmeInitialApnMaxBitrateUl': networking_constraints[0]['sliceProfiles'][0]['profileParams']['ulThroughput']
+        'mmeInitialApnMaxBitrateUl': networking_constraints[0]['sliceProfiles'][0]['profileParams']['ulThroughput'],
+        'enableLteEnb': True,
+        'rrhCellPower0': '30'
     }
 
     try:
