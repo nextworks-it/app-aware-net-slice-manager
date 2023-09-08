@@ -125,6 +125,8 @@ def nsmf_scale(ns_id: str, nssi_id: str, networking_constraints: dict, jsessioni
         'rrhCellPower0': rrh_cell_power0
     }
 
+    nsmf_log.info('Scale request: ' + str(payload))
+
     try:
         response = requests.put('http://' + nsmf_url + '/vs/basic/nslcm/ns/' +
                                 ns_id + '/action/configure', cookies=cookies, json=payload)
