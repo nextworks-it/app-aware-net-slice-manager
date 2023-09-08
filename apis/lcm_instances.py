@@ -42,7 +42,7 @@ profile_params = api.model('profile_params', {
     'delay': fields.Float,
     'jitter': fields.Float,
     'priorityLevel': fields.Integer,
-    'rrhCellPower0': fields.Integer,
+    'rrhCellPower0': fields.String,
     'enableLteEnb': fields.Boolean
 }, strict=True)
 slice_profile = api.model('slice_profile', {
