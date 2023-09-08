@@ -103,16 +103,26 @@ def nsmf_get_nssi(ns_id: str, jsessionid: str) -> str:
 
 
 def nsmf_scale(ns_id: str, nssi_id: str, networking_constraints: dict, jsessionid: str):
+    profile_params = networking_constraints[0]['sliceProfiles'][0]['profileParams']
+
+    enable_lte_enb = True
+    if 'enableLteEnb' in profile_params:
+        enable_lte_enb = profile_params['enableLteEnb']
+
+    rrh_cell_power0 = '30'
+    if 'rrhCellPower0' in profile_params:
+        rrh_cell_power0 = profile_params['rrhCellPower0']
+
     cookies = {'JSESSIONID': jsessionid}
     payload = {
         'actionType': 'CORE_RAN_CONFIGURATION',
         'nsiId': ns_id,
         'nssiId': nssi_id,
         'sliceSubnetType': 'CORE',
-        'mmeInitialApnMaxBitrateDl': networking_constraints[0]['sliceProfiles'][0]['profileParams']['dlThroughput'],
-        'mmeInitialApnMaxBitrateUl': networking_constraints[0]['sliceProfiles'][0]['profileParams']['ulThroughput'],
-        'enableLteEnb': True,
-        'rrhCellPower0': '30'
+        'mmeInitialApnMaxBitrateDl': profile_params['dlThroughput'],
+        'mmeInitialApnMaxBitrateUl': profile_params['ulThroughput'],
+        'enableLteEnb': enable_lte_enb,
+        'rrhCellPower0': rrh_cell_power0
     }
 
     try:

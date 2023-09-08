@@ -41,7 +41,9 @@ profile_params = api.model('profile_params', {
     'dataRate': fields.Float,
     'delay': fields.Float,
     'jitter': fields.Float,
-    'priorityLevel': fields.Integer
+    'priorityLevel': fields.Integer,
+    'rrhCellPower0': fields.Integer,
+    'enableLteEnb': fields.Boolean
 }, strict=True)
 slice_profile = api.model('slice_profile', {
     'sliceType': fields.String(enum=['EMBB', 'URLLC', 'MMTC'], required=True),
