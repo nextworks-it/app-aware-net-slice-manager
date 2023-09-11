@@ -105,48 +105,33 @@ def create_constrained_sa(core_api: client.CoreV1Api, host: str,
 
 
 def allocate_quota(computing_constraint, context: str):
-    for _ in range(5):
-        try:
-            try:
-                # Load the kubeconfig at .kube/config and change context to create
-                # the resources for the quota in the specified K8s cluster
-                platform_manager_client.update_local_config()
-                config.load_kube_config(context=context)
-            except ConfigException:
-                # If .kube/config context is missing
-                quota_log.error('Missing context ' + context + ' in .kube/config, abort.')
-                raise exceptions.MissingContextException('Missing context ' + context)
+    try:
+        # Load the kubeconfig at .kube/config and change context to create
+        # the resources for the quota in the specified K8s cluster
+        platform_manager_client.update_local_config()
+        config.load_kube_config(context=context)
+    except ConfigException:
+        # If .kube/config context is missing
+        quota_log.error('Missing context ' + context + ' in .kube/config, abort.')
+        raise exceptions.MissingContextException('Missing context ' + context)
 
-            # Get host of K8s cluster
-            host = client.Configuration.get_default_copy().host
+    # Get host of K8s cluster
+    host = client.Configuration.get_default_copy().host
 
-            # Create K8s clients
-            with client.ApiClient() as api_client:
-                core_api = client.CoreV1Api(api_client)
-                rbac_api = client.RbacAuthorizationV1Api(api_client)
+    # Create K8s clients
+    with client.ApiClient() as api_client:
+        core_api = client.CoreV1Api(api_client)
+        rbac_api = client.RbacAuthorizationV1Api(api_client)
 
-            # Create the resources for the quota
-            ns_name = create_constrained_ns(core_api, host, computing_constraint)
-            sa_name = create_constrained_sa(core_api, host, rbac_api, ns_name)
-            time.sleep(2)
-            secret = core_api.read_namespaced_secret(sa_name + '-token', ns_name)
+    # Create the resources for the quota
+    ns_name = create_constrained_ns(core_api, host, computing_constraint)
+    sa_name = create_constrained_sa(core_api, host, rbac_api, ns_name)
+    secret = core_api.read_namespaced_secret(sa_name + '-token', ns_name)
 
-            # Get the ca.crt and token of the ServiceAccount created
-            #import pdb
-            #pdb.set_trace()
-            sa_secret_data = secret.data
-            sa_secret_ca_crt = sa_secret_data['ca.crt']
-            sa_secret_token = b64decode(sa_secret_data['token']).decode('utf-8')
-            break
-        except:
-            quota_log.error("Error creating namespace")
-            with client.ApiClient() as api_client:
-                core_api = client.CoreV1Api(api_client)
-                try:
-                    core_api.delete_namespace(name=ns_name)
-                except ApiException as e:
-                    raise e
-            pass
+    # Get the ca.crt and token of the ServiceAccount created
+    sa_secret_data = secret.data
+    sa_secret_ca_crt = sa_secret_data['ca.crt']
+    sa_secret_token = b64decode(sa_secret_data['token']).decode('utf-8')
 
     # Build and return the kubeconfig that should be used to manage the resources in the new quota
     cluster_name = str(uuid.uuid4())
@@ -265,6 +250,7 @@ def allocate_quotas(location_constraints: dict, computing_constraints: dict) -> 
 
 
 def update_quotas(location_constraints: dict, computing_constraints: dict, current_quotas):
+    platform_manager_client.update_local_config()
     quotas = build_quotas(location_constraints, computing_constraints)
 
     for geographicalAreaId, quota in quotas.items():

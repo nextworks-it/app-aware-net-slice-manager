@@ -12,6 +12,7 @@ class InstantiationStatus(enum.Enum):
 class SliceType(enum.Enum):
     URLLC = 1
     EMBB = 2
+    MMTC = 3
 
 
 class IsolationLevel(enum.Enum):

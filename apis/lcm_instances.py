@@ -43,7 +43,9 @@ profile_params = api.model('profile_params', {
     'dataRate': fields.Float,
     'delay': fields.Float,
     'jitter': fields.Float,
-    'priorityLevel': fields.Integer
+    'priorityLevel': fields.Integer,
+    'rrhCellPower0': fields.String,
+    'enableLteEnb': fields.Boolean
 }, strict=True)
 slice_profile = api.model('slice_profile', {
     'sliceType': fields.String(enum=['EMBB', 'URLLC', 'MMTC'], required=True),
@@ -352,7 +354,7 @@ class NetworkSliceStatusUpdateHandler(Resource):
         try:
             db_manager.get_network_slice_status_by_id(ns_id)
         except exceptions.NotExistingEntityException as e:
-            abort(400, f"Cannot handle notification from nsmf {str(e)}")
+            abort(400, str(e))
 
         # Abort if notification type is 'ERROR'
         if nsi_notification_type == NsiNotificationType.ERROR.name:
@@ -551,6 +553,7 @@ class VASScaleCtrl(Resource):
     @api.response(401, 'Unauthorized', model=error_msg)
     @api.response(403, 'Forbidden', model=error_msg)
     @api.response(404, 'Not Found', model=error_msg)
+    @api.response(405, 'Method Not Allowed', model=error_msg)
     @api.response(500, 'Internal Server Error', model=error_msg)
     def patch(self, vasi):
         # Get Vertical Application Slice Status by VASI
@@ -562,6 +565,10 @@ class VASScaleCtrl(Resource):
             abort(404, str(e))
         except exceptions.DBException as e:
             abort(500, str(e))
+
+        if _vas_status[1] != InstantiationStatus.INSTANTIATED.name:
+            abort(405, 'Vertical Application Slice ' + vasi +
+                  ' cannot be scaled. Current Status: ' + _vas_status[1])
 
         # Validate request parameters
         errors = vas_post_schema.validate(request.args)
@@ -578,6 +585,18 @@ class VASScaleCtrl(Resource):
         app_quota_manager.update_quotas(vas_intent['locationConstraints'],
                                         vas_intent['computingConstraints'],
                                         _va_quota_status)
+
+        ns_id = _vas_status[2]
+        jsessionid = '1A530637289A03B07199A44E8D531427'
+        try:
+            nsmf_manager.nsmf_scale(
+                ns_id=ns_id,
+                nssi_id=nsmf_manager.nsmf_get_nssi(ns_id, jsessionid),
+                networking_constraints=vas_intent['networkingConstraints'],
+                jsessionid=jsessionid
+            )
+        except exceptions.FailedNSMFRequestException as e:
+            abort(500, str(e))
 
         return '', 204
 
