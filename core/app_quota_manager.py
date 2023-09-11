@@ -142,11 +142,10 @@ def allocate_quota(computing_constraint, context: str):
             quota_log.error("Error creating namespace")
             with client.ApiClient() as api_client:
                 core_api = client.CoreV1Api(api_client)
-
-            try:
-                core_api.delete_namespace(name=ns_name)
-            except ApiException as e:
-                raise e
+                try:
+                    core_api.delete_namespace(name=ns_name)
+                except ApiException as e:
+                    raise e
             pass
 
     # Build and return the kubeconfig that should be used to manage the resources in the new quota

@@ -57,7 +57,7 @@ def merge_configs(configs) -> dict:
 
 def validate_kubeconfig(kubeconfig) -> bool:
     try:
-        current_kubeconfig = KubeConfigLoader(config_dict = kubeconfig)
+        KubeConfigLoader(config_dict = kubeconfig)
     except: 
         platform_manager_log.error(f"Malformatted kubeconfig \n \n{kubeconfig}")
         return False
