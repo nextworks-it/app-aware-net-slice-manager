@@ -125,7 +125,7 @@ def allocate_quota(computing_constraint, context: str):
     sa_name = create_constrained_sa(core_api, host, rbac_api, ns_name)
 
     secret = core_api.read_namespaced_secret(sa_name + '-token', ns_name)
-    while secret.data is not None:
+    while secret.data is None:
         secret = core_api.read_namespaced_secret(sa_name + '-token', ns_name)
 
     # Get the ca.crt and token of the ServiceAccount created
