@@ -68,8 +68,6 @@ def map_nests_to_slice_type(nests: List[dict]) -> List[Tuple[dict, SliceType, in
 
         nest_slice_type_map.append((nest, slice_type, min_delay))
 
-    print(nest_slice_type_map)
-
     return nest_slice_type_map
 
 
@@ -233,7 +231,7 @@ def select_nest(networking_constraints: List[dict]) -> str:
                     isolation_level = IsolationLevel[isolation_level]
                     if isolation_level.value > max_isolation_level.value:
                         max_isolation_level = isolation_level
-            elif slice_type == SliceType.EMBB.name or slice_type == SliceType.MMTC.name:
+            elif slice_type == SliceType.EMBB.name:
                 embb += 1
 
                 isolation_level = profile_params.get('isolationLevel')
