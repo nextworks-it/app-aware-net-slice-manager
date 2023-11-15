@@ -68,6 +68,8 @@ def map_nests_to_slice_type(nests: List[dict]) -> List[Tuple[dict, SliceType, in
 
         nest_slice_type_map.append((nest, slice_type, min_delay))
 
+    print(nest_slice_type_map)
+
     return nest_slice_type_map
 
 
