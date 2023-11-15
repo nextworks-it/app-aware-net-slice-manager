@@ -62,6 +62,10 @@ def map_nests_to_slice_type(nests: List[dict]) -> List[Tuple[dict, SliceType, in
         else:
             slice_type = SliceType.EMBB
 
+            if gst.get('sliceType') is not None:
+                if gst.get('sliceType') == SliceType.MMTC.name:
+                    slice_type = SliceType.MMTC
+
         nest_slice_type_map.append((nest, slice_type, min_delay))
 
     return nest_slice_type_map
@@ -179,9 +183,31 @@ def select_embb_nest(isolation_level: str,
     return nest_slice_type_map[0][0]
 
 
+def select_mmtc_nest(isolation_level: str,
+                     dl_throughput: float,
+                     ul_throughput: float) -> dict:
+    nests = get_nests()
+    nest_slice_type_map = map_nests_to_slice_type(nests)
+    nest_slice_type_map = filter_nest_slice_type_map(nest_slice_type_map, SliceType.MMTC)
+
+    nest_slice_type_map = filter_by_isolation_level(nest_slice_type_map, isolation_level)
+
+    if dl_throughput != 0:
+        nest_slice_type_map = filter_by_dl_throughput(nest_slice_type_map, dl_throughput)
+
+    if ul_throughput != 0:
+        nest_slice_type_map = filter_by_ul_throughput(nest_slice_type_map, ul_throughput)
+
+    if len(nest_slice_type_map) == 0:
+        raise FailedIntentTranslationException('No MMTC NEST available with specified constraints.')
+
+    return nest_slice_type_map[0][0]
+
+
 def select_nest(networking_constraints: List[dict]) -> str:
     urllc = 0
     embb = 0
+    mmtc = 0
     min_delay = maxsize
     max_isolation_level = IsolationLevel.NO_ISOLATION
     max_dl_throughput = 0
@@ -223,17 +249,38 @@ def select_nest(networking_constraints: List[dict]) -> str:
                 if ul_throughput is not None:
                     if ul_throughput > max_ul_throughput:
                         max_ul_throughput = ul_throughput
+            elif slice_type == SliceType.MMTC.name:
+                mmtc += 1
+
+                isolation_level = profile_params.get('isolationLevel')
+                if isolation_level is not None:
+                    isolation_level = IsolationLevel[isolation_level]
+                    if isolation_level.value > max_isolation_level.value:
+                        max_isolation_level = isolation_level
+
+                dl_throughput = profile_params.get('dlThroughput')
+                if dl_throughput is not None:
+                    if dl_throughput > max_dl_throughput:
+                        max_dl_throughput = dl_throughput
+
+                ul_throughput = profile_params.get('ulThroughput')
+                if ul_throughput is not None:
+                    if ul_throughput > max_ul_throughput:
+                        max_ul_throughput = ul_throughput
             else:
                 continue
 
-    if urllc > 0 and embb > 0:
-        raise NotImplementedException('Case with urllc > 0 and embb > 0 not implemented, abort.')
-    elif urllc == 0 and embb == 0:
+    if urllc > 0 and embb > 0 and mmtc > 0:
+        raise NotImplementedException('Case with urllc > 0 and embb > 0 and mmtc > 0 not implemented, abort.')
+    elif urllc == 0 and embb == 0 and mmtc == 0:
         raise MalformedIntentException('Malformed intent [networkingConstraints], abort')
     elif urllc > 0:
         nest = select_urllc_nest(min_delay, IsolationLevelMapping[max_isolation_level.name].value)
-    else:
+    elif embb > 0:
         nest = select_embb_nest(IsolationLevelMapping[max_isolation_level.name].value,
+                                max_dl_throughput, max_ul_throughput)
+    else:
+        nest = select_mmtc_nest(IsolationLevelMapping[max_isolation_level.name].value,
                                 max_dl_throughput, max_ul_throughput)
 
     return nest['gst']['gstId']
