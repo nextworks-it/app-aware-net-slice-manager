@@ -9,7 +9,6 @@ class MissingContextException(Exception):
 class QuantitiesMalformedException(Exception):
     pass
 
-
 class DBException(Exception):
     pass
 
@@ -29,15 +28,22 @@ class NotImplementedException(Exception):
 class MalformedIntentException(Exception):
     pass
 
-
 class FailedNSMFRequestException(Exception):
     pass
-
 
 class FailedVAONotificationException(Exception):
     pass
 
 class PlatformManagerNotReadyException(Exception):
+    pass
+
+class ResourceManagerNotReadyException(Exception):
+    pass
+
+class ClusterConfigException(Exception):
+    pass
+
+class NodeConfigException(Exception):
     pass
 
 class FailedQuotaScalingException(Exception):

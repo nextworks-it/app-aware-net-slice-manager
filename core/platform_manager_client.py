@@ -1,10 +1,11 @@
+""" DEPRECATED, USE RESOURCE MANAGER
 import requests
 from core import platform_manager_url, platform_manager_log
-from kubernetes.config.kube_config import KubeConfigLoader, KubeConfigMerger
-from kubernetes.config import config_exception
+from kubernetes.config.kube_config import KubeConfigLoader
 import yaml
 import os
 from core.exceptions import PlatformManagerNotReadyException
+
 
 def get_config_from_platform_manager() -> dict:
     try:
@@ -68,3 +69,5 @@ def update_local_config() -> None:
     platform_manager_log.info(f"Updated Local Config with {len(kubeconfig_merged['clusters'])} clusters, {len(kubeconfig_merged['users'])} users and {len(kubeconfig_merged['contexts'])} contexts")
     with open('/root/.kube/config', 'w') as f:
         f.write(yaml.dump(kubeconfig_merged))
+
+"""

@@ -1,7 +1,6 @@
-from core import nest_catalogue_url, qi
+from core import nest_catalogue_url, qi, intent_translation_manager_log
 from core.enums import SliceType, IsolationLevel, IsolationLevelMapping
 from core.exceptions import FailedIntentTranslationException, NotImplementedException, MalformedIntentException
-from core.nsmf_manager import nsmf_onboard_dummy_nst, nsmf_translate_nst_to_nest
 from typing import List, Tuple
 from sys import maxsize
 import requests
@@ -187,35 +186,24 @@ def select_embb_nest(isolation_level: str,
     return nest_slice_type_map[0][0]
 
 
-def onboard_dummy_nst():
-    return nsmf_onboard_dummy_nst()
-
-
-
-def translate_nst_to_nest(nst_id):
-    return nsmf_translate_nst_to_nest(nst_id)
-
-
 def select_nest(networking_constraints: List[dict]) -> str:
-    IANA = bool(os.getenv("IANA", False))
-    if IANA:
-        return str(uuid.uuid4())
-
-        # Onboard Dummy NST
-        nst_id = onboard_dummy_nst()
-
-        # Translate NST to NEST
-        nest = translate_nst_to_nest(nst_id)
-       
-        # Return NEST
-        return nest
-
     urllc = 0
     embb = 0
+    v2x = 0
     min_delay = maxsize
     max_isolation_level = IsolationLevel.NO_ISOLATION
-    max_dl_throughput = 0
-    max_ul_throughput = 0
+
+    # EMBB
+    embb_max_dl_throughput = 20
+    embb_max_ul_throughput = 2
+    embb_min_delay = 15 # ms
+
+    # V2X
+    v2x_max_dl_throughput = 70
+    v2x_max_ul_throughput = 12
+    v2x_min_delay = 15 # ms
+
+
     
 
     for networking_constraint in networking_constraints:
@@ -247,15 +235,57 @@ def select_nest(networking_constraints: List[dict]) -> str:
 
                 dl_throughput = profile_params.get('dlThroughput')
                 if dl_throughput is not None:
-                    if dl_throughput > max_dl_throughput:
-                        max_dl_throughput = dl_throughput
+                    if dl_throughput > embb_max_dl_throughput:
+                        #max_dl_throughput = dl_throughput
+                        intent_translation_manager_log.error(f"dl_throughput {dl_throughput} < embb_max_dl_throughput {embb_max_dl_throughput}")
+                        raise MalformedIntentException('Malformed intent [networkingConstraints], abort')
+                        
+                        
 
                 ul_throughput = profile_params.get('ulThroughput')
                 if ul_throughput is not None:
-                    if ul_throughput > max_ul_throughput:
-                        max_ul_throughput = ul_throughput
+                    if ul_throughput > embb_max_ul_throughput:
+                        #max_ul_throughput = ul_throughput
+                        intent_translation_manager_log.error(f"ul_throughput {ul_throughput} < embb_max_ul_throughput {embb_max_ul_throughput}")
+                        raise MalformedIntentException('Malformed intent [networkingConstraints], abort')
+                    
+                delay = profile_params.get('delay')
+                if delay is not None:
+                    if delay < embb_min_delay:
+                        #max_ul_throughput = ul_throughput
+                        intent_translation_manager_log.error(f"delay {delay} > embb_min_delay {embb_min_delay}")
+                        raise MalformedIntentException('Malformed intent [networkingConstraints], abort')
+                    
+            elif slice_type == SliceType.V2X.name:
+                v2x += 1
+
+                dl_throughput = profile_params.get('dlThroughput')
+                if dl_throughput is not None:
+                    if dl_throughput > v2x_max_dl_throughput:
+                        #max_dl_throughput = dl_throughput
+                        intent_translation_manager_log.error(f"dl_throughput {dl_throughput} < v2x_max_dl_throughput {v2x_max_dl_throughput}")
+                        raise MalformedIntentException('Malformed intent [networkingConstraints], abort')
+                        
+                        
+
+                ul_throughput = profile_params.get('ulThroughput')
+                if ul_throughput is not None:
+                    if ul_throughput > v2x_max_ul_throughput:
+                        #max_ul_throughput = ul_throughput
+                        intent_translation_manager_log.error(f"ul_throughput {ul_throughput} < v2x_max_ul_throughput {v2x_max_ul_throughput}")
+                        raise MalformedIntentException('Malformed intent [networkingConstraints], abort')
+                    
+                delay = profile_params.get('delay')
+                if delay is not None:
+                    if delay < v2x_min_delay:
+                        #max_ul_throughput = ul_throughput
+                        intent_translation_manager_log.error(f"delay {delay} > v2x_min_delay {v2x_min_delay}")
+                        raise MalformedIntentException('Malformed intent [networkingConstraints], abort')
+                    
             else:
                 continue
+
+    return str(uuid.uuid4())
 
     if urllc > 0 and embb > 0:
         raise NotImplementedException('Case with urllc > 0 and embb > 0 not implemented, abort.')

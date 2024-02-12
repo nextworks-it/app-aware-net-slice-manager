@@ -10,10 +10,14 @@ from base64 import b64decode
 import uuid
 import time
 import re
-from core import platform_manager_client
+#from core import platform_manager_client
+from core import resource_manager_client
+import yaml
 
 pattern = re.compile('^([+-]?[0-9.]+)([eEinumkKMGTP]*[-+]?[0-9]*)$')
 
+class CannotCreateNSException(Exception):
+    pass
 
 def create_constrained_ns(core_api: client.CoreV1Api, host: str, computing_constraint) -> str:
     # Create a namespace with random uuid as name
@@ -57,8 +61,9 @@ def create_constrained_sa(core_api: client.CoreV1Api, host: str,
     quota_log.info('Created Secret Token for Service Account %s in K8s cluster %s.', sa_name, host)
 
     # Create ClusterRole to define Service Accounts permissions in given namespace(s)
+    cluster_role_name = str(uuid.uuid4())
     c_role = client.V1ClusterRole(
-        metadata=client.V1ObjectMeta(name='ns-sa-permissions'),
+        metadata=client.V1ObjectMeta(name=cluster_role_name),
         rules=[
             client.V1PolicyRule(
                 api_groups=['', 'extensions', 'apps'],
@@ -74,7 +79,7 @@ def create_constrained_sa(core_api: client.CoreV1Api, host: str,
     )
     try:
         rbac_api.create_cluster_role(c_role)
-        quota_log.info('Created ClusterRole ns-sa-permissions in K8s cluster %s.', host)
+        quota_log.info('Created ClusterRole %s in K8s cluster %s.', cluster_role_name, host)
     except ApiException as e:
         if e.status == 409:
             quota_log.info('ClusterRole already exists.')
@@ -94,7 +99,7 @@ def create_constrained_sa(core_api: client.CoreV1Api, host: str,
         role_ref=client.V1RoleRef(
             api_group='rbac.authorization.k8s.io',
             kind='ClusterRole',
-            name='ns-sa-permissions'
+            name=cluster_role_name
         )
     )
     rbac_api.create_namespaced_role_binding(ns_name, rb)
@@ -108,7 +113,9 @@ def allocate_quota(computing_constraint, context: str):
     try:
         # Load the kubeconfig at .kube/config and change context to create
         # the resources for the quota in the specified K8s cluster
-        platform_manager_client.update_local_config()
+        #platform_manager_client.update_local_config()
+        resource_manager_client.reload_config_from_resource_manager()
+        resource_manager_client.use_cluster_from_name(context)
         config.load_kube_config(context=context)
     except ConfigException:
         # If .kube/config context is missing
@@ -123,46 +130,61 @@ def allocate_quota(computing_constraint, context: str):
         core_api = client.CoreV1Api(api_client)
         rbac_api = client.RbacAuthorizationV1Api(api_client)
 
-    # Create the resources for the quota
-    ns_name = create_constrained_ns(core_api, host, computing_constraint)
-    sa_name = create_constrained_sa(core_api, host, rbac_api, ns_name)
-    secret = core_api.read_namespaced_secret(sa_name + '-token', ns_name)
+    for _ in range(1):
+        try:
+            # Create the resources for the quota
+            ns_name = create_constrained_ns(core_api, host, computing_constraint)
+            sa_name = create_constrained_sa(core_api, host, rbac_api, ns_name)
+            secret = core_api.read_namespaced_secret(sa_name + '-token', ns_name)
 
-    # Get the ca.crt and token of the ServiceAccount created
-    sa_secret_data = secret.data
-    sa_secret_ca_crt = sa_secret_data['ca.crt']
-    sa_secret_token = b64decode(sa_secret_data['token']).decode('utf-8')
+            # Get the ca.crt and token of the ServiceAccount created
+            sa_secret_data = secret.data
+            sa_secret_ca_crt = sa_secret_data['ca.crt']
+            sa_secret_token = b64decode(sa_secret_data['token']).decode('utf-8')
 
-    # Build and return the kubeconfig that should be used to manage the resources in the new quota
-    cluster_name = str(uuid.uuid4())
-    return {
-        'apiVersion': 'v1',
-        'clusters': [{
-            'cluster': {
-                'certificate-authority-data': sa_secret_ca_crt,
-                'server': host
-            },
-            'name': cluster_name
-        }],
-        'contexts': [{
-            'context': {
-                'cluster': cluster_name,
-                'namespace': ns_name,
-                'user': sa_name
-            },
-            'name': context
-        }],
-        'current-context': context,
-        'kind': 'Config',
-        'preferences': {},
-        'users': [{
-            'user': {
-                'token': sa_secret_token,
-                'client-key-data': sa_secret_ca_crt
-            },
-            'name': sa_name
-        }]
-    }
+            # Build and return the kubeconfig that should be used to manage the resources in the new quota
+            cluster_name = str(uuid.uuid4())
+            return {
+                'apiVersion': 'v1',
+                'clusters': [{
+                    'cluster': {
+                        'certificate-authority-data': sa_secret_ca_crt,
+                        'server': host
+                    },
+                    'name': cluster_name
+                }],
+                'contexts': [{
+                    'context': {
+                        'cluster': cluster_name,
+                        'namespace': ns_name,
+                        'user': sa_name
+                    },
+                    'name': context
+                }],
+                'current-context': context,
+                'kind': 'Config',
+                'preferences': {},
+                'users': [{
+                    'user': {
+                        'token': sa_secret_token,
+                        'client-key-data': sa_secret_ca_crt
+                    },
+                    'name': sa_name
+                }]
+            }
+            #kubeconfig = None
+            #with open("/root/.kube/config", "r") as stream:
+            #    kubeconfig = yaml.safe_load(stream)
+            ##for context in kubeconfig["contexts"]:
+            ##    if context["context"]["cluster"] == "microk8s-cluster":
+            ##        context["context"]["namespace"] = ns_name
+            #quota_log.info(f"kubeconfig for the instantiation {kubeconfig}")
+            #return kubeconfig
+        except Exception as e:
+            quota_log.exception("Something is wrong allocating NS, waiting 10s and trying again " + str(e))
+            time.sleep(10)
+            core_api.delete_namespace(ns_name)
+    raise CannotCreateNSException
 
 
 def aggregate_quotas(cs_a: dict, cs_b: dict) -> dict:
@@ -250,7 +272,6 @@ def allocate_quotas(location_constraints: dict, computing_constraints: dict) -> 
 
 
 def update_quotas(location_constraints: dict, computing_constraints: dict, current_quotas):
-    platform_manager_client.update_local_config()
     quotas = build_quotas(location_constraints, computing_constraints)
 
     for geographicalAreaId, quota in quotas.items():
@@ -273,7 +294,8 @@ def update_quotas(location_constraints: dict, computing_constraints: dict, curre
                 'requests.storage': quota['storage']
             })
         )
-
+        resource_manager_client.reload_config_from_resource_manager()
+        resource_manager_client.use_cluster_from_name(current_quota['current-context'])
         config.load_kube_config(context=current_quota['current-context'])
         with client.ApiClient() as api_client:
             core_api = client.CoreV1Api(api_client)
@@ -285,7 +307,8 @@ def update_quotas(location_constraints: dict, computing_constraints: dict, curre
 
 
 def delete_quota(kubeconfig):
-    platform_manager_client.update_local_config()
+    resource_manager_client.reload_config_from_resource_manager()
+    resource_manager_client.use_cluster_from_name(kubeconfig['current-context'])
     config.load_kube_config(context=kubeconfig['current-context'])
     with client.ApiClient() as api_client:
         core_api = client.CoreV1Api(api_client)

@@ -29,9 +29,7 @@ def nsmf_login(usr: str, psw: str) -> str:
 
 # Request the creation of the info entry for the new 5G Network Slice
 def nsmf_create_slice_info(nest_id: str, jsessionid: str, vasi: str) -> str:
-    IANA = bool(os.getenv("IANA", False))
-    if IANA:
-        return str(uuid.uuid4())
+    return str(uuid.uuid4())
     username = os.getenv("NSMF_USERNAME", default=None) 
     password = os.getenv("NSMF_PASSWORD", default=None) 
     cookies = {'JSESSIONID': jsessionid}
@@ -63,12 +61,8 @@ def nsmf_create_slice_info(nest_id: str, jsessionid: str, vasi: str) -> str:
 
 # Request the instantiation of the 5G Network Slice
 def nsmf_instantiate(ns_id: str, jsessionid: str):
-    IANA = bool(os.getenv("IANA", False))
-    if IANA:
-        nsmf_log.info("dummy nsmf_instantiate")
-        return 
-    username = os.getenv("NSMF_USERNAME", default=None) 
-    password = os.getenv("NSMF_PASSWORD", default=None) 
+    username = os.getenv("NSMF_USERNAME", default="admin") 
+    password = os.getenv("NSMF_PASSWORD", default="password") 
     cookies = {'JSESSIONID': jsessionid}
     payload = {'nsiId': ns_id}
     try:
@@ -86,15 +80,15 @@ def nsmf_instantiate(ns_id: str, jsessionid: str):
         raise FailedNSMFRequestException(msg)
 
     status_code = response.status_code
-    if status_code != 202:
+    if status_code != 202 and status_code != 200:
         msg = ns_id + ' Instantiation failed, status code: ' + str(status_code)
         nsmf_log.info(msg)
         raise FailedNSMFRequestException(msg)
 
 
 def nsmf_terminate(ns_id: str, jsessionid: str):
-    username = os.getenv("NSMF_USERNAME", default=None) 
-    password = os.getenv("NSMF_PASSWORD", default=None) 
+    username = os.getenv("NSMF_USERNAME", default="admin") 
+    password = os.getenv("NSMF_PASSWORD", default="password") 
     cookies = {'JSESSIONID': jsessionid}
     payload = {'nsiId': ns_id}
     try:
@@ -112,7 +106,7 @@ def nsmf_terminate(ns_id: str, jsessionid: str):
         raise FailedNSMFRequestException(msg)
 
     status_code = response.status_code
-    if status_code != 202:
+    if status_code != 202 and status_code != 200:
         msg = ns_id + ' Termination request failed, status code: ' + str(status_code)
         nsmf_log.info(msg)
         raise FailedNSMFRequestException(msg)
@@ -128,7 +122,7 @@ def nsmf_onboard_dummy_nst(jsessionid = None):
        "nst": {
          "nstId": "nstid-" + id,
          "nstName": "nstname-" + id,
-         "nstVersion": "v.0.0.1",
+         "nstVersion": "v0.0.1",
          "nstProvider": "Nextworks",
          "nstServiceProfileList": [
            {

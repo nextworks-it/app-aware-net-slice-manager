@@ -12,6 +12,15 @@ from threading import Thread
 import marshmallow.fields
 import requests
 import os
+import logging
+
+logging.basicConfig(
+    level=logging.DEBUG,
+    format='[%(asctime)s] - %(name)s - %(levelname)s - %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
+
+api_log = logging.getLogger('api')
 
 api = Namespace('lcm/instances', description='Application-Aware NSM LCM APIs')
 
@@ -229,6 +238,8 @@ class VASCtrl(Resource):
 
         vas_intent = request.json
 
+        api_log.info(f"Received Intent from VAO {vas_intent}")
+
         # Create entry for vertical application slice
         vertical_application_slice_id = None
         try:
@@ -244,7 +255,7 @@ class VASCtrl(Resource):
             k8s_configs = app_quota_manager.allocate_quotas(vas_intent['locationConstraints'],
                                                             vas_intent['computingConstraints'])
         # Abort if quota cannot be allocated
-        except (exceptions.MissingContextException, exceptions.QuantitiesMalformedException) as e:
+        except (exceptions.MissingContextException, exceptions.QuantitiesMalformedException, app_quota_manager.CannotCreateNSException) as e:
             try:
                 db_manager.update_va_with_status(vertical_application_slice_id, InstantiationStatus.FAILED.name)
             # Abort if DB entry cannot be updated
@@ -327,14 +338,13 @@ class VASCtrl(Resource):
             finally:
                 abort(500, str(e))
 
-        IANA = bool(os.getenv("IANA", False))
-        if IANA:
-            body = {
-                'nsiId': ns_id,
-                'nsiNotifType': 'STATUS_CHANGED',
-                'nsiStatus': 'INSTANTIATED'
-            }
-            requests.post("http://localhost:5000/lcm/instances/network_slice/status_update", json=body)
+        ############# IANA
+        #db_manager.update_network_slice_status(ns_id, InstantiationStatus.INSTANTIATED.name)
+        #db_manager.update_va_with_status_by_network_slice(ns_id, InstantiationStatus.INSTANTIATED.name)
+        #thread = Thread(target=vao_manager.notify, kwargs={'ns_id': ns_id})
+        #thread.start()
+        ############# IANA
+
         return vertical_application_slice_id
 
 

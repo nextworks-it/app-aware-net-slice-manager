@@ -3,11 +3,10 @@ from pathlib import Path
 from json import loads
 import logging
 import psycopg2
-import requests
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO,
+    level=logging.DEBUG,
     format='[%(asctime)s] - %(name)s - %(levelname)s - %(message)s',
     datefmt='%Y-%m-%d %H:%M:%S'
 )
@@ -18,6 +17,8 @@ db_log = logging.getLogger('db-manager')
 nsmf_log = logging.getLogger('nsmf-manager')
 vao_log = logging.getLogger('vao-manager')
 platform_manager_log = logging.getLogger('platform-manager')
+resource_manager_log = logging.getLogger('resource-manager')
+intent_translation_manager_log = logging.getLogger('intent_translation_manager_log')
 
 # Load the config.ini file
 parser = ConfigParser()
@@ -78,7 +79,8 @@ commands = (
     CREATE TABLE IF NOT EXISTS clusters(
         cluster_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         name VARCHAR(255),
-        type VARCHAR(255)
+        type VARCHAR(255),
+        kubeconfig JSON
     )
     """,
     """
@@ -151,3 +153,12 @@ if parser.has_section('platform_manager'):
         raise Exception('PLATFORM MANAGER URL not found in platform_manager section of config.ini file')
 else:
     raise Exception('Section platform_manager not found in the config.ini file')
+
+# Load platform manager section from config.ini
+resource_manager_url = None
+if parser.has_section('resource_manager'):
+    resource_manager_url = parser.get('resource_manager', 'url')
+    if resource_manager_url is None:
+        raise Exception('RESOURCE MANAGER URL not found in resource_manager section of config.ini file')
+else:
+    raise Exception('Section resource_manager not found in the config.ini file')

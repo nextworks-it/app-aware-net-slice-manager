@@ -4,6 +4,9 @@ from core.exceptions import DBException, NotExistingEntityException
 import json
 import uuid
 
+##################################################
+# vertical_application_quota_status
+##################################################
 def insert_va_quota_status(kubeconfig, vertical_application_slice_id: str):
     # Create a new entry <uuid, kubeconfig> in the DB for a vertical application quota
     command = """
@@ -90,6 +93,9 @@ def delete_va_quota_by_vas_id(vertical_application_slice_id: str):
         raise DBException('Error while removing vertical_application_quota_status: ' + str(error))
 
 
+##################################################
+# network_slice_status
+##################################################
 def insert_network_slice_status(network_slice_id: str, network_slice_status: str):
     # Create a new entry <network_slice_id, network_slice_status> in the DB for a network slice
     command = """INSERT INTO network_slice_status(network_slice_id, network_slice_status) VALUES (%s, %s)"""
@@ -167,7 +173,9 @@ def delete_network_slice_status_by_id(network_slice_id: str):
         db_log.error(str(error))
         raise DBException('Error while removing network_slice_status: ' + str(error))
 
-
+##################################################
+# vertical_application_slice_status
+##################################################
 def insert_va_status(vertical_application_slice_status: str, intent):
     # Create a new entry <uuid, vertical_application_slice_status, intent> in the DB for a vertical application status
     command = """
@@ -309,16 +317,20 @@ def delete_va_status_by_id(vertical_application_slice_id: str):
         db_log.error(str(error))
         raise DBException('Error while removing vertical_application_slice_status: ' + str(error))
 
-
+##################################################
+# cluster_nodes
+##################################################
 def insert_cluster_node(cluster_node: dict, cluster_id: str):
     # Create a new entry <uuid, name, labels, cluster_id> in the DB
     command = """
-    INSERT INTO cluster_nodes(name, labels, cluster_id)
-    VALUES (%s, %s, %s) RETURNING cluster_node_id
+    INSERT INTO cluster_nodes(cluster_node_id, name, labels, cluster_id)
+    VALUES (%s, %s, %s, %s) RETURNING cluster_node_id
     """
+    if not 'cluster_node_id' in cluster_node:
+        cluster_node['cluster_node_id'] = str(uuid.uuid4())
     try:
         cur = db_conn.cursor()
-        cur.execute(command, (cluster_node['name'], json.dumps(cluster_node['labels']), cluster_id))
+        cur.execute(command, (cluster_node['cluster_node_id'], cluster_node['name'], json.dumps(cluster_node['labels']), cluster_id))
         cluster_node_id = cur.fetchone()[0]
         cur.close()
         db_conn.commit()
@@ -367,7 +379,7 @@ def update_cluster_node(cluster_node_id: str, cluster_node: dict):
     """
     try:
         cur = db_conn.cursor()
-        cur.execute(command, (cluster_node['name'], cluster_node['labels'], cluster_node_id))
+        cur.execute(command, (cluster_node['name'], json.dumps(cluster_node['labels']), cluster_node_id))
         cur.close()
         db_conn.commit()
 
@@ -406,15 +418,19 @@ def delete_cluster_node_by_cluster_id(cluster_id: str):
         db_log.error(str(error))
         raise DBException('Error while removing cluster_nodes for cluster_id %s: ' + cluster_id)
 
-
+##################################################
+# clusters
+##################################################
 def insert_cluster(cluster: dict):
     # Create a new entry <uuid, name, type> in the DB
     command = """
-    INSERT INTO clusters(name, type) VALUES (%s, %s) RETURNING cluster_id
+    INSERT INTO clusters(cluster_id, name, type, kubeconfig) VALUES (%s, %s, %s, %s) RETURNING cluster_id
     """
+    if not 'cluster_id' in cluster:
+        cluster['cluster_id'] = str(uuid.uuid4())
     try:
         cur = db_conn.cursor()
-        cur.execute(command, (cluster['name'], cluster['type']))
+        cur.execute(command, (cluster['cluster_id'], cluster['name'], cluster['type'], json.dumps(cluster['kubeconfig'])))
         cluster_id = cur.fetchone()[0]
         cur.close()
         db_conn.commit()
@@ -458,15 +474,32 @@ def get_cluster_by_id(cluster_id: str):
     except DatabaseError as error:
         db_log.error(str(error))
         raise DBException('Error while fetching cluster: ' + str(error))
+    
+def get_cluster_by_name(cluster_name: str):
+    # Retrieve cluster entry by cluster_id (PRIMARY KEY)
+    command = """SELECT * FROM clusters WHERE name = (%s)"""
+    try:
+        cur = db_conn.cursor()
+        cur.execute(command, (cluster_name,))
+        cluster = cur.fetchone()
+        cur.close()
+
+        if cluster is None:
+            raise NotExistingEntityException('cluster with NAME ' + cluster_name + ' not found.')
+
+        return cluster
+    except DatabaseError as error:
+        db_log.error(str(error))
+        raise DBException('Error while fetching cluster: ' + str(error))
 
 
 def update_cluster(cluster_id: str, cluster: dict):
     # Update a cluster entry in the DB
-    command = """UPDATE clusters SET name = %s, type = %s WHERE cluster_id = %s
+    command = """UPDATE clusters SET name = %s, type = %s, kubeconfig = %s WHERE cluster_id = %s
     """
     try:
         cur = db_conn.cursor()
-        cur.execute(command, (cluster['name'], cluster['type'], cluster_id))
+        cur.execute(command, (cluster['name'], cluster['type'], json.dumps(cluster['kubeconfig']), cluster_id))
         cur.close()
         db_conn.commit()
 
@@ -490,7 +523,9 @@ def delete_cluster(cluster_id: str):
         db_log.error(str(error))
         raise DBException('Error while removing cluster %s: ' + cluster_id)
 
-
+##################################################
+# locations
+##################################################
 def insert_location(location: dict, cluster_id: str):
     # Create a new entry <uuid, location_name, cluster_id, latitude, longitude, coverage_radius, segment> in the DB
     command = """
@@ -546,6 +581,23 @@ def get_location_by_id(geographical_area_id: str):
         db_log.error(str(error))
         raise DBException('Error while fetching location: ' + str(error))
 
+def get_location_by_name(location_name: str):
+    # Retrieve location entry by location_name 
+    command = """SELECT * FROM locations WHERE location_name = (%s)"""
+    try:
+        cur = db_conn.cursor()
+        cur.execute(command, (location_name,))
+        location = cur.fetchone()
+        cur.close()
+
+        if location is None:
+            raise NotExistingEntityException('location with name ' + location_name + ' not found.')
+
+        return location
+    except DatabaseError as error:
+        db_log.error(str(error))
+        raise DBException('Error while fetching location: ' + str(error))
+
 
 def update_location(geographical_area_id: str, location: dict):
     # Update a location entry in the DB
@@ -579,3 +631,17 @@ def delete_location(geographical_area_id: str):
     except (Exception, DatabaseError) as error:
         db_log.error(str(error))
         raise DBException('Error while removing location %s: ' + geographical_area_id)
+
+def get_locations_by_cluster_id(cluster_id: str):
+    # Retrieve all locations linked to the given cluster_id
+    command = """SELECT * FROM locations WHERE cluster_id = %s"""
+    try:
+        cur = db_conn.cursor()
+        cur.execute(command, (cluster_id,))
+        locations = cur.fetchall()
+        cur.close()
+
+        return locations
+    except DatabaseError as error:
+        db_log.error(str(error))
+        raise DBException('Error while fetching locations: ' + str(error))

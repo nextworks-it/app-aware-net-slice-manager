@@ -1,14 +1,14 @@
 import logging
 from flask import Flask
 from apis import api
-from core.platform_manager_client import update_local_config
-from core.exceptions import PlatformManagerNotReadyException
+from core.resource_manager_client import reload_config_from_resource_manager
+from core.exceptions import  ResourceManagerNotReadyException
 import time
 
 # configure root logger
 logging.basicConfig(
-    level=logging.INFO,
-    format='[%(asctime)s] - %(name)s - %(levelname)s - %(message)s',
+    level=logging.DEBUG,
+    format='[%(asctime)s] - %(name)s - %(levelname)s - %(message)s]',
     datefmt='%Y-%m-%d %H:%M:%S'
 )
 
@@ -18,10 +18,10 @@ api.init_app(app)
 
 while True:
     try:
-        update_local_config()
+        reload_config_from_resource_manager()
         break
-    except PlatformManagerNotReadyException:
-        logging.getLogger('main').info('Platform Manager Not ready, waiting 10s')
+    except ResourceManagerNotReadyException:
+        logging.getLogger('main').info('Resource Manager Not ready, waiting 10s')
         time.sleep(10)
 
 if __name__ == '__main__':

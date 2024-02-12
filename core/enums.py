@@ -13,6 +13,7 @@ class SliceType(enum.Enum):
     URLLC = 1
     EMBB = 2
     MMTC = 3
+    V2X = 4
 
 
 class IsolationLevel(enum.Enum):
