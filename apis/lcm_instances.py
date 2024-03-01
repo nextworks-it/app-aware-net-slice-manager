@@ -596,17 +596,17 @@ class VASScaleCtrl(Resource):
                                         vas_intent['computingConstraints'],
                                         _va_quota_status)
 
-        ns_id = _vas_status[2]
-        jsessionid = '1A530637289A03B07199A44E8D531427'
-        try:
-            nsmf_manager.nsmf_scale(
-                ns_id=ns_id,
-                nssi_id=nsmf_manager.nsmf_get_nssi(ns_id, jsessionid),
-                networking_constraints=vas_intent['networkingConstraints'],
-                jsessionid=jsessionid
-            )
-        except exceptions.FailedNSMFRequestException as e:
-            abort(500, str(e))
+        #ns_id = _vas_status[2]
+        #jsessionid = '1A530637289A03B07199A44E8D531427'
+        #try:
+        #    nsmf_manager.nsmf_scale(
+        #        ns_id=ns_id,
+        #        nssi_id=nsmf_manager.nsmf_get_nssi(ns_id, jsessionid),
+        #        networking_constraints=vas_intent['networkingConstraints'],
+        #        jsessionid=jsessionid
+        #    )
+        #except exceptions.FailedNSMFRequestException as e:
+        #    abort(500, str(e))
 
         return '', 204
 
