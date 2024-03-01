@@ -338,13 +338,6 @@ class VASCtrl(Resource):
             finally:
                 abort(500, str(e))
 
-        ############# IANA
-        #db_manager.update_network_slice_status(ns_id, InstantiationStatus.INSTANTIATED.name)
-        #db_manager.update_va_with_status_by_network_slice(ns_id, InstantiationStatus.INSTANTIATED.name)
-        #thread = Thread(target=vao_manager.notify, kwargs={'ns_id': ns_id})
-        #thread.start()
-        ############# IANA
-
         return vertical_application_slice_id
 
 
