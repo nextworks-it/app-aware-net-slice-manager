@@ -1,7 +1,7 @@
 Werkzeug <= 2.1.2
 Flask == 2.1.2
 flask-restx >= 0.5.1
-kubernetes
+kubernetes == 28.1.0
 marshmallow
 psycopg2-binary
 aenum
