@@ -206,3 +206,55 @@ def nsmf_translate_nst_to_nest(nst_id, jsessionid = None):
     
     status_code = response.status_code
     return response.text
+
+def nsmf_scale(ns_id: str, nssi_id: str, networking_constraints: dict, jsessionid: str):
+    username = os.getenv("NSMF_USERNAME", default="admin") 
+    password = os.getenv("NSMF_PASSWORD", default="password") 
+    cookies = {'JSESSIONID': jsessionid}
+    payload = {'nsiId': ns_id}
+
+
+    profile_params = networking_constraints[0]['sliceProfiles'][0]['profileParams']
+
+    enable_lte_enb = True
+    if 'enableLteEnb' in profile_params:
+        enable_lte_enb = profile_params['enableLteEnb']
+
+    rrh_cell_power0 = '30'
+    if 'rrhCellPower0' in profile_params:
+        rrh_cell_power0 = profile_params['rrhCellPower0']
+
+    cookies = {'JSESSIONID': jsessionid}
+    payload = {
+        'actionType': 'CORE_RAN_CONFIGURATION',
+        'nsiId': ns_id,
+        'nssiId': nssi_id,
+        'sliceSubnetType': 'CORE',
+        'mmeInitialApnMaxBitrateDl': profile_params['dlThroughput'],
+        'mmeInitialApnMaxBitrateUl': profile_params['ulThroughput'],
+        'enableLteEnb': enable_lte_enb,
+        'rrhCellPower0': rrh_cell_power0
+    }
+
+    nsmf_log.info('Scale request: ' + str(payload))
+
+    try:
+        if username:
+            nsmf_log.info("Auth with user/pass")
+            response = requests.put('http://' + nsmf_url + '/vs/basic/nslcm/ns/' +
+                                ns_id + '/action/configure', auth=HTTPBasicAuth(username, password), json=payload)
+        else:
+            nsmf_log.info("Auth with cookies")
+            response = requests.put('http://' + nsmf_url + '/vs/basic/nslcm/ns/' +
+                                ns_id + '/action/configure', cookies=cookies, json=payload)
+        
+    except requests.exceptions.RequestException as e:
+        msg = str(e)
+        nsmf_log.info(msg)
+        raise FailedNSMFRequestException(msg)
+
+    status_code = response.status_code
+    if status_code != 202:
+        msg = ns_id + ' Scale request failed, status code: ' + str(status_code)
+        nsmf_log.info(msg)
+        raise FailedNSMFRequestException(msg)
