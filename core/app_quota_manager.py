@@ -106,6 +106,25 @@ def create_constrained_sa(core_api: client.CoreV1Api, host: str,
 
     quota_log.info('Created RoleBinding %s-role-binding in K8s cluster %s.', sa_name, host)
 
+    rb2 = client.V1RoleBinding(
+        metadata=client.V1ObjectMeta(name=sa_name + '-role-binding-monitoring'),
+        subjects=[
+            client.V1Subject(
+                kind='ServiceAccount',
+                name=sa_name,
+                namespace=ns_name
+            )
+        ],
+        role_ref=client.V1RoleRef(
+            api_group='rbac.authorization.k8s.io',
+            kind='ClusterRole',
+            name=cluster_role_name
+        )
+    )
+    rbac_api.create_namespaced_role_binding("monitoring", rb2)
+
+    quota_log.info('Created RoleBinding %s-role-binding-monitoring in K8s cluster %s.', sa_name, host)
+    
     return sa_name
 
 
