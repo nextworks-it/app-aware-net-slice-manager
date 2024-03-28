@@ -254,7 +254,7 @@ def nsmf_scale(ns_id: str, nssi_id: str, networking_constraints: dict, jsessioni
         raise FailedNSMFRequestException(msg)
 
     status_code = response.status_code
-    if status_code != 202 or status_code != 200:
+    if status_code != 202 and status_code != 200:
         msg = ns_id + ' Scale request failed, status code: ' + str(status_code)
         nsmf_log.info(msg)
         raise FailedNSMFRequestException(msg)
