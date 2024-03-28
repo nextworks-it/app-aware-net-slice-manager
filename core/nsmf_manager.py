@@ -258,3 +258,25 @@ def nsmf_scale(ns_id: str, nssi_id: str, networking_constraints: dict, jsessioni
         msg = ns_id + ' Scale request failed, status code: ' + str(status_code)
         nsmf_log.info(msg)
         raise FailedNSMFRequestException(msg)
+    
+def nsmf_get_nssi(ns_id: str, jsessionid: str) -> str:
+    return str(uuid.uuid4())
+    username = os.getenv("NSMF_USERNAME", default="admin") 
+    password = os.getenv("NSMF_PASSWORD", default="password") 
+    cookies = {'JSESSIONID': jsessionid}
+    payload = {'nsiId': ns_id}
+
+    try:
+        response = requests.get('http://' + nsmf_url + '/vs/basic/nslcm/ns/' + ns_id, cookies=cookies)
+    except requests.exceptions.RequestException as e:
+        msg = str(e)
+        nsmf_log.info(msg)
+        raise FailedNSMFRequestException(msg)
+
+    status_code = response.status_code
+    if status_code != 200:
+        msg = ns_id + ' GET info request failed, status code: ' + str(status_code)
+        nsmf_log.info(msg)
+        raise FailedNSMFRequestException(msg)
+
+    return response.json()['networkSliceSubnetIds'][0]
